@@ -2,15 +2,11 @@ import { Moon, Sun, Shield } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
-import { useAuth } from "@/hooks/useAuth";
 import aecLogo from "@/assets/aec-logo.png";
 
 export const Header = () => {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
-  const { user, userRole } = useAuth();
-
-  const canAccessDashboard = userRole && ['admin', 'manager', 'coordinator'].includes(userRole);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-md border-b border-border">
@@ -30,18 +26,17 @@ export const Header = () => {
 
         {/* Botões da direita */}
         <div className="flex items-center gap-2">
-          {/* Botão Dashboard - Apenas para usuários autorizados */}
-          {user && canAccessDashboard && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate("/dashboard")}
-              className="hover:bg-primary/10"
-              aria-label="Acessar Dashboard"
-            >
-              <Shield className="h-5 w-5" />
-            </Button>
-          )}
+          {/* Botão Dashboard */}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate("/dashboard")}
+            className="hover:bg-primary/10"
+            aria-label="Acessar Dashboard"
+            title="Dashboard"
+          >
+            <Shield className="h-5 w-5" />
+          </Button>
 
           {/* Toggle Theme */}
           <Button
