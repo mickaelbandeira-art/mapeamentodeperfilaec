@@ -16,6 +16,7 @@ export type Database = {
     Tables: {
       participants: {
         Row: {
+          cargo: string
           coordinator: string
           created_at: string | null
           email: string
@@ -26,11 +27,11 @@ export type Database = {
           name: string
           network_login: string | null
           registration: string
-          role: string
           supervisor: string | null
           updated_at: string | null
         }
         Insert: {
+          cargo: string
           coordinator: string
           created_at?: string | null
           email: string
@@ -41,11 +42,11 @@ export type Database = {
           name: string
           network_login?: string | null
           registration: string
-          role: string
           supervisor?: string | null
           updated_at?: string | null
         }
         Update: {
+          cargo?: string
           coordinator?: string
           created_at?: string | null
           email?: string
@@ -56,14 +57,47 @@ export type Database = {
           name?: string
           network_login?: string | null
           registration?: string
-          role?: string
           supervisor?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          cargo: string | null
+          created_at: string | null
+          email: string
+          full_name: string
+          id: string
+          matricula: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          cargo?: string | null
+          created_at?: string | null
+          email: string
+          full_name: string
+          id: string
+          matricula?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          cargo?: string | null
+          created_at?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          matricula?: string | null
           updated_at?: string | null
         }
         Relationships: []
       }
       test_results: {
         Row: {
+          answers: Json | null
           completed_at: string | null
           created_at: string | null
           dominant_profile: string
@@ -79,6 +113,7 @@ export type Database = {
           test_duration_seconds: number | null
         }
         Insert: {
+          answers?: Json | null
           completed_at?: string | null
           created_at?: string | null
           dominant_profile: string
@@ -94,6 +129,7 @@ export type Database = {
           test_duration_seconds?: number | null
         }
         Update: {
+          answers?: Json | null
           completed_at?: string | null
           created_at?: string | null
           dominant_profile?: string
@@ -141,7 +177,15 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      dashboard_stats: {
+        Row: {
+          completion_rate: number | null
+          pending_tests: number | null
+          total_completed_tests: number | null
+          total_participants: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       has_role: {
@@ -150,6 +194,28 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      search_participants: {
+        Args: {
+          filter_cargo?: string
+          filter_coordinator?: string
+          filter_status?: string
+          search_text?: string
+        }
+        Returns: {
+          cargo: string
+          coordinator: string
+          dominant_profile: string
+          email: string
+          has_completed_test: boolean
+          id: string
+          name: string
+          registration: string
+          score_c: number
+          score_d: number
+          score_i: number
+          score_s: number
+        }[]
       }
     }
     Enums: {
