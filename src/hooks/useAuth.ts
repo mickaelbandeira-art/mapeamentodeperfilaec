@@ -10,9 +10,12 @@ export const useAuth = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
+    console.log("🔐 Inicializando autenticação...");
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("🔄 Auth state changed:", event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -29,6 +32,7 @@ export const useAuth = () => {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("📋 Sessão existente:", session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -41,6 +45,7 @@ export const useAuth = () => {
   }, []);
 
   const fetchUserRole = async (userId: string) => {
+    console.log("👤 Buscando role do usuário:", userId);
     try {
       const { data, error } = await supabase
         .from("user_roles")
@@ -48,10 +53,13 @@ export const useAuth = () => {
         .eq("user_id", userId)
         .single();
 
+      console.log("📊 Role encontrado:", { data, error });
+      
       if (error) throw error;
       setUserRole(data?.role || null);
+      console.log("✅ Role configurado:", data?.role);
     } catch (error) {
-      console.error("Error fetching user role:", error);
+      console.error("❌ Erro ao buscar role:", error);
       setUserRole(null);
     }
   };

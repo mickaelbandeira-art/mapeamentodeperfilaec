@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserCircle, Sparkles } from "lucide-react";
+import { UserCircle, Sparkles, Loader2, CheckCircle2 } from "lucide-react";
 import { WaveBackground } from "./WaveBackground";
 import { DotPattern } from "./DotPattern";
 import { supabase } from "@/integrations/supabase/client";
@@ -29,6 +29,7 @@ export const RegistrationScreen = ({ onComplete }: RegistrationScreenProps) => {
         return;
       }
 
+      console.log("🔍 Buscando participante com matrícula:", registration);
       setLoading(true);
       try {
         const { data, error } = await supabase
@@ -38,23 +39,27 @@ export const RegistrationScreen = ({ onComplete }: RegistrationScreenProps) => {
           .eq("is_active", true)
           .maybeSingle();
 
+        console.log("📊 Resultado da busca:", { data, error });
+
         if (error) throw error;
 
         if (data) {
+          console.log("✅ Participante encontrado:", data);
           setName(data.name);
           setEmail(data.email);
           setIsAutoFilled(true);
           toast({
-            title: "Participante encontrado!",
-            description: "Seus dados foram preenchidos automaticamente.",
+            title: "✓ Participante encontrado!",
+            description: "Nome e email preenchidos automaticamente.",
           });
         } else {
+          console.log("⚠️ Nenhum participante encontrado com esta matrícula");
           setName("");
           setEmail("");
           setIsAutoFilled(false);
         }
       } catch (error: any) {
-        console.error("Error fetching participant:", error);
+        console.error("❌ Erro ao buscar participante:", error);
       } finally {
         setLoading(false);
       }
@@ -105,22 +110,29 @@ export const RegistrationScreen = ({ onComplete }: RegistrationScreenProps) => {
           <form onSubmit={handleSubmit} className="space-y-6 mt-8 text-left">
             <div className="space-y-2">
               <Label htmlFor="registration" className="text-base flex items-center gap-2">
-                <span className="text-purple-400">#</span> Matrícula
+                <span className="text-purple-400">#</span> Matrícula *
               </Label>
-              <Input
-                id="registration"
-                type="text"
-                placeholder="Digite sua matrícula"
-                value={registration}
-                onChange={(e) => setRegistration(e.target.value)}
-                className="h-12 text-base glass-card-hover border-border/50"
-                required
-              />
+              <div className="relative">
+                <Input
+                  id="registration"
+                  type="text"
+                  placeholder="Digite sua matrícula"
+                  value={registration}
+                  onChange={(e) => setRegistration(e.target.value)}
+                  className="h-12 text-base glass-card-hover border-border/50"
+                  required
+                />
+                {loading && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <Loader2 className="h-5 w-5 animate-spin text-purple-400" />
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="name" className="text-base flex items-center gap-2">
-                <UserCircle className="w-4 h-4 text-purple-400" /> Nome Completo
+                <UserCircle className="w-4 h-4 text-purple-400" /> Nome Completo *
               </Label>
               <Input
                 id="name"
@@ -128,15 +140,18 @@ export const RegistrationScreen = ({ onComplete }: RegistrationScreenProps) => {
                 placeholder="Digite seu nome completo"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="h-12 text-base glass-card-hover border-border/50"
+                className={`h-12 text-base glass-card-hover border-border/50 ${
+                  isAutoFilled ? "border-green-500/50 bg-green-500/5" : ""
+                }`}
                 disabled={loading}
+                readOnly={isAutoFilled}
                 required
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="email" className="text-base flex items-center gap-2">
-                <span className="text-purple-400">@</span> E-mail
+                <span className="text-purple-400">@</span> E-mail *
               </Label>
               <Input
                 id="email"
@@ -144,16 +159,20 @@ export const RegistrationScreen = ({ onComplete }: RegistrationScreenProps) => {
                 placeholder="seu@email.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="h-12 text-base glass-card-hover border-border/50"
+                className={`h-12 text-base glass-card-hover border-border/50 ${
+                  isAutoFilled ? "border-green-500/50 bg-green-500/5" : ""
+                }`}
                 disabled={loading}
+                readOnly={isAutoFilled}
                 required
               />
             </div>
 
             {isAutoFilled && (
               <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30 text-center">
-                <p className="text-green-400 text-sm">
-                  ✓ Dados encontrados e preenchidos automaticamente
+                <p className="text-green-400 text-sm flex items-center justify-center gap-2">
+                  <CheckCircle2 className="h-4 w-4" />
+                  Dados encontrados e preenchidos automaticamente!
                 </p>
               </div>
             )}
