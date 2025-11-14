@@ -8,9 +8,14 @@ import { WaveBackground } from "./WaveBackground";
 
 interface QuizScreenProps {
   onComplete: (scores: { D: number; I: number; S: number; C: number }) => void;
+  participantData: {
+    registration: string;
+    name: string;
+    email: string;
+  };
 }
 
-export const QuizScreen = ({ onComplete }: QuizScreenProps) => {
+export const QuizScreen = ({ onComplete, participantData }: QuizScreenProps) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [scores, setScores] = useState({ D: 0, I: 0, S: 0, C: 0 });
   const [selectedAnswers, setSelectedAnswers] = useState<string[]>(new Array(questions.length).fill(""));

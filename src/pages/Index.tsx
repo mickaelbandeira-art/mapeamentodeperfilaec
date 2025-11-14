@@ -1,15 +1,28 @@
 import { useState } from "react";
 import { LandingScreen } from "@/components/LandingScreen";
+import { RegistrationScreen } from "@/components/RegistrationScreen";
 import { QuizScreen } from "@/components/QuizScreen";
 import { ResultsScreen } from "@/components/ResultsScreen";
 
-type Screen = 'landing' | 'quiz' | 'results';
+type Screen = 'landing' | 'registration' | 'quiz' | 'results';
+
+interface ParticipantData {
+  registration: string;
+  name: string;
+  email: string;
+}
 
 const Index = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('landing');
   const [scores, setScores] = useState({ D: 0, I: 0, S: 0, C: 0 });
+  const [participantData, setParticipantData] = useState<ParticipantData | null>(null);
 
   const handleStart = () => {
+    setCurrentScreen('registration');
+  };
+
+  const handleRegistrationComplete = (data: ParticipantData) => {
+    setParticipantData(data);
     setCurrentScreen('quiz');
   };
 
@@ -26,8 +39,9 @@ const Index = () => {
   return (
     <div className="pt-16">
       {currentScreen === 'landing' && <LandingScreen onStart={handleStart} />}
-      {currentScreen === 'quiz' && <QuizScreen onComplete={handleComplete} />}
-      {currentScreen === 'results' && <ResultsScreen scores={scores} onRestart={handleRestart} />}
+      {currentScreen === 'registration' && <RegistrationScreen onComplete={handleRegistrationComplete} />}
+      {currentScreen === 'quiz' && participantData && <QuizScreen onComplete={handleComplete} participantData={participantData} />}
+      {currentScreen === 'results' && participantData && <ResultsScreen scores={scores} participantData={participantData} onRestart={handleRestart} />}
     </div>
   );
 };

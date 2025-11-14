@@ -1,11 +1,19 @@
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Brain, Target, Users, LineChart, Download, RotateCcw } from "lucide-react";
 import { WaveBackground } from "./WaveBackground";
 import { DotPattern } from "./DotPattern";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface ResultsScreenProps {
   scores: { D: number; I: number; S: number; C: number };
+  participantData: {
+    registration: string;
+    name: string;
+    email: string;
+  };
   onRestart: () => void;
 }
 
@@ -52,7 +60,7 @@ const profileDescriptions = {
   }
 };
 
-export const ResultsScreen = ({ scores, onRestart }: ResultsScreenProps) => {
+export const ResultsScreen = ({ scores, participantData, onRestart }: ResultsScreenProps) => {
   const total = Object.values(scores).reduce((a, b) => a + b, 0);
   const percentages = {
     D: Math.round((scores.D / total) * 100),
@@ -69,6 +77,42 @@ export const ResultsScreen = ({ scores, onRestart }: ResultsScreenProps) => {
   // Find secondary profile
   const secondary = Object.entries(percentages).sort((a, b) => b[1] - a[1])[1][0] as 'D' | 'I' | 'S' | 'C';
   const secondaryProfile = profileDescriptions[secondary];
+
+  // Save results to database
+  useEffect(() => {
+    const saveResults = async () => {
+      try {
+        const { error } = await supabase
+          .from("test_results")
+          .insert({
+            registration: participantData.registration,
+            name: participantData.name,
+            email: participantData.email,
+            score_d: scores.D,
+            score_i: scores.I,
+            score_s: scores.S,
+            score_c: scores.C,
+            dominant_profile: dominant,
+          });
+
+        if (error) throw error;
+
+        toast({
+          title: "Resultados salvos!",
+          description: "Seus resultados foram salvos com sucesso no sistema.",
+        });
+      } catch (error: any) {
+        console.error("Error saving results:", error);
+        toast({
+          title: "Erro ao salvar resultados",
+          description: "Não foi possível salvar seus resultados. Por favor, entre em contato com o suporte.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    saveResults();
+  }, [scores, participantData, dominant]);
 
   return (
     <div className="min-h-screen p-4 py-20 relative overflow-hidden">
