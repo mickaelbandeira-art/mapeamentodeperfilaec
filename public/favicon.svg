@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <style>
+      .dark-blue { fill: #005A9C; }
+      .cyan { fill: #00A9CE; }
+    </style>
+  </defs>
+  
+  <!-- Simple geometric representation of AeC -->
+  <!-- Left bar (a) - dark blue -->
+  <rect class="dark-blue" x="10" y="30" width="20" height="40" rx="3"/>
+  
+  <!-- Middle bar (e) - cyan -->
+  <rect class="cyan" x="40" y="30" width="20" height="40" rx="3"/>
+  
+  <!-- Right bar (c) - dark blue -->
+  <rect class="dark-blue" x="70" y="30" width="20" height="40" rx="3"/>
+</svg>

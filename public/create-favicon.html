@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Create Favicon</title>
+</head>
+
+<body>
+    <canvas id="canvas" width="16" height="16"></canvas>
+    <script>
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Create a simple AeC favicon
+        // Background - transparent
+        ctx.clearRect(0, 0, 16, 16);
+
+        // Draw simplified "aec" text
+        ctx.font = 'bold 10px Arial';
+        ctx.textBaseline = 'middle';
+        ctx.textAlign = 'center';
+
+        // Dark blue for 'a'
+        ctx.fillStyle = '#005A9C';
+        ctx.fillText('a', 3, 8);
+
+        // Cyan for 'e'
+        ctx.fillStyle = '#00A9CE';
+        ctx.fillText('e', 8, 8);
+
+        // Dark blue for 'c'
+        ctx.fillStyle = '#005A9C';
+        ctx.fillText('c', 13, 8);
+
+        // Convert to PNG
+        canvas.toBlob(function (blob) {
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'favicon.png';
+            a.click();
+        });
+    </script>
+</body>
+
+</html>
