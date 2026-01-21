@@ -119,17 +119,20 @@ export const ResultsScreen = ({ scores, participantData, onRestart }: ResultsScr
       <WaveBackground />
       <DotPattern position="top-right" />
       <DotPattern position="bottom-left" />
-      
+
       <div className="max-w-6xl mx-auto space-y-6 relative z-10">
         <Card className="p-6 sm:p-8 md:p-10 glass-card shadow-2xl animate-fade-in text-center">
-          <div className={`inline-flex p-5 rounded-full bg-${profile.color} mb-6 animate-float shadow-lg glow-purple`}>
+          <div
+            className="inline-flex p-5 rounded-full mb-6 animate-float shadow-lg glow-purple"
+            style={{ backgroundColor: `hsl(var(--${profile.color}))` }}
+          >
             <Icon className="w-12 h-12 md:w-16 md:h-16 text-white" />
           </div>
-          
+
           <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-gradient-hero">
             Seu Perfil Principal: {profile.name}
           </h1>
-          
+
           <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto mb-8">
             {profile.description}
           </p>
@@ -142,13 +145,16 @@ export const ResultsScreen = ({ scores, participantData, onRestart }: ResultsScr
               return (
                 <div key={type} className="space-y-2">
                   <div className="flex items-center justify-center gap-2">
-                    <TypeIcon className={`w-5 h-5 text-${typeProfile.color}`} />
+                    <TypeIcon className="w-5 h-5" style={{ color: `hsl(var(--${typeProfile.color}))` }} />
                     <span className="font-bold text-lg">{percentage}%</span>
                   </div>
-                  <div className="h-32 bg-gray-800 rounded-lg overflow-hidden">
+                  <div className="h-32 bg-gray-800 rounded-lg overflow-hidden relative">
                     <div
-                      className={`bg-${typeProfile.color} transition-all duration-1000 ease-out`}
-                      style={{ height: `${percentage}%`, marginTop: `${100 - percentage}%` }}
+                      className="absolute bottom-0 w-full transition-all duration-1000 ease-out"
+                      style={{
+                        backgroundColor: `hsl(var(--${typeProfile.color}))`,
+                        height: `${percentage}%`
+                      }}
                     />
                   </div>
                   <span className="text-sm text-gray-400">{typeProfile.name}</span>
