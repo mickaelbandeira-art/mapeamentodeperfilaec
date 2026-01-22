@@ -20,7 +20,7 @@ export const Header = () => {
           <img
             src={aecLogo}
             alt="AEC Logo"
-            className="h-10 w-auto animate-pulse-logo brightness-0 invert"
+            className="h-10 w-auto animate-pulse-logo dark:brightness-0 dark:invert transition-all"
           />
         </button>
 

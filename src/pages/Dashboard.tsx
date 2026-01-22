@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { ParticipantsTable } from "@/components/dashboard/ParticipantsTable";
 import { DiscChart } from "@/components/dashboard/DiscChart";
+import { AverageScoresChart } from "@/components/dashboard/AverageScoresChart";
 import { SearchFilters } from "@/components/dashboard/SearchFilters";
 import { Users, CheckCircle, Clock, TrendingUp, LogOut } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -157,6 +158,7 @@ const Dashboard = () => {
         {discData.length > 0 && (
           <div className="grid gap-4 lg:grid-cols-2">
             <DiscChart data={discData} />
+            <AverageScoresChart participants={participants} />
           </div>
         )}
 

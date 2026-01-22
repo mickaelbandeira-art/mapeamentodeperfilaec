@@ -8,6 +8,54 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
+    /* Light Mode (Default) */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+
+    --primary: 270 60% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+
+    --accent: 280 70% 65%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 270 60% 60%;
+
+    --radius: 0.75rem;
+
+    /* DISC Colors */
+    --disc-dominance: 0 85% 60%;
+    --disc-influence: 40 100% 60%;
+    --disc-stability: 145 65% 55%;
+    --disc-conformity: 210 85% 60%;
+
+    /* Gradient stops (Light) */
+    --gradient-primary-start: 270 60% 60%;
+    --gradient-primary-end: 30 100% 60%;
+    
+    --gradient-hero-start: 280 70% 55%;
+    --gradient-hero-mid: 320 80% 60%;
+    --gradient-hero-end: 30 100% 60%;
+  }
+
+  .dark {
+    /* Dark Mode */
     --background: 240 10% 3.9%;
     --foreground: 0 0% 98%;
 
@@ -35,22 +83,6 @@ All colors MUST be HSL.
     --border: 240 10% 15%;
     --input: 240 10% 15%;
     --ring: 270 60% 60%;
-
-    --radius: 0.75rem;
-
-    /* DISC Colors */
-    --disc-dominance: 0 85% 60%;
-    --disc-influence: 40 100% 60%;
-    --disc-stability: 145 65% 55%;
-    --disc-conformity: 210 85% 60%;
-
-    /* Gradient stops */
-    --gradient-primary-start: 270 60% 60%;
-    --gradient-primary-end: 30 100% 60%;
-    
-    --gradient-hero-start: 280 70% 55%;
-    --gradient-hero-mid: 320 80% 60%;
-    --gradient-hero-end: 30 100% 60%;
   }
 }
 
