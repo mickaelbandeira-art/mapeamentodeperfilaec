@@ -12,6 +12,7 @@ interface QuizScreenProps {
     registration: string;
     name: string;
     email: string;
+    cpf: string;
   };
 }
 
@@ -55,7 +56,7 @@ export const QuizScreen = ({ onComplete, participantData }: QuizScreenProps) => 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
       <WaveBackground />
-      
+
       <div className="max-w-3xl w-full space-y-6 relative z-10 animate-fade-in">
         <div className="space-y-3">
           <div className="flex justify-between items-center text-sm text-gray-400">

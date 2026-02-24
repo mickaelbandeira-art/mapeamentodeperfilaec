@@ -13,6 +13,13 @@ interface ResultsScreenProps {
     registration: string;
     name: string;
     email: string;
+    cpf: string;
+  };
+  instructorData: {
+    instructorName: string;
+    instructorRegistration: string;
+    instructorEmail: string;
+    className: string;
   };
   onRestart: () => void;
 }
@@ -60,7 +67,7 @@ const profileDescriptions = {
   }
 };
 
-export const ResultsScreen = ({ scores, participantData, onRestart }: ResultsScreenProps) => {
+export const ResultsScreen = ({ scores, participantData, instructorData, onRestart }: ResultsScreenProps) => {
   const total = Object.values(scores).reduce((a, b) => a + b, 0);
   const percentages = {
     D: Math.round((scores.D / total) * 100),
@@ -88,11 +95,16 @@ export const ResultsScreen = ({ scores, participantData, onRestart }: ResultsScr
             registration: participantData.registration,
             name: participantData.name,
             email: participantData.email,
+            cpf: participantData.cpf,
             score_d: scores.D,
             score_i: scores.I,
             score_s: scores.S,
             score_c: scores.C,
             dominant_profile: dominant,
+            instructor_name: instructorData.instructorName,
+            instructor_registration: instructorData.instructorRegistration,
+            instructor_email: instructorData.instructorEmail,
+            class_name: instructorData.className,
           });
 
         if (error) throw error;

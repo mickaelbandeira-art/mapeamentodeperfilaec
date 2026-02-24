@@ -40,11 +40,15 @@ const Dashboard = () => {
   const [searchText, setSearchText] = useState("");
   const [filterCargo, setFilterCargo] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterTurma, setFilterTurma] = useState("all");
+  const [filterInstructor, setFilterInstructor] = useState("all");
   const [cargos, setCargos] = useState<string[]>([]);
+  const [turmas, setTurmas] = useState<string[]>([]);
+  const [instructors, setInstructors] = useState<{ name: string; email: string }[]>([]);
 
   useEffect(() => {
     fetchDashboardData();
-  }, [searchText, filterCargo, filterStatus]);
+  }, [searchText, filterCargo, filterStatus, filterTurma, filterInstructor]);
 
   const fetchDashboardData = async () => {
     try {
@@ -65,14 +69,28 @@ const Dashboard = () => {
           search_text: searchText || null,
           filter_cargo: filterCargo === "all" ? null : filterCargo,
           filter_status: filterStatus === "all" ? null : filterStatus,
+          filter_turma: filterTurma === "all" ? null : filterTurma,
+          filter_instructor_email: filterInstructor === "all" ? null : filterInstructor,
         });
 
       if (participantsError) throw participantsError;
       setParticipants(participantsData || []);
 
-      // Get unique cargos for filter
-      const uniqueCargos = [...new Set(participantsData?.map((p: any) => p.cargo) || [])];
+      // Get unique values for filters
+      const uniqueCargos = [...new Set(participantsData?.map((p: any) => p.cargo).filter(Boolean) || [])];
       setCargos(uniqueCargos as string[]);
+
+      const uniqueTurmas = [...new Set(participantsData?.map((p: any) => p.class_name).filter(Boolean) || [])];
+      setTurmas(uniqueTurmas as string[]);
+
+      const uniqueInstructors = Array.from(
+        new Map(
+          participantsData
+            ?.filter((p: any) => p.instructor_name && p.instructor_email)
+            .map((p: any) => [p.instructor_email, { name: p.instructor_name, email: p.instructor_email }])
+        ).values()
+      );
+      setInstructors(uniqueInstructors);
 
     } catch (error: any) {
       console.error("Error fetching dashboard data:", error);
@@ -171,7 +189,13 @@ const Dashboard = () => {
             onCargoChange={setFilterCargo}
             filterStatus={filterStatus}
             onStatusChange={setFilterStatus}
+            filterTurma={filterTurma}
+            onTurmaChange={setFilterTurma}
+            filterInstructor={filterInstructor}
+            onInstructorChange={setFilterInstructor}
             cargos={cargos}
+            turmas={turmas}
+            instructors={instructors}
           />
 
           <ParticipantsTable participants={participants} />

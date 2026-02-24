@@ -21,6 +21,8 @@ interface Participant {
   score_i: number | null;
   score_s: number | null;
   score_c: number | null;
+  class_name: string | null;
+  instructor_name: string | null;
 }
 
 interface ParticipantsTableProps {
@@ -53,6 +55,8 @@ export const ParticipantsTable = ({ participants }: ParticipantsTableProps) => {
             <TableHead>Matrícula</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Cargo</TableHead>
+            <TableHead>Turma</TableHead>
+            <TableHead>Instrutor</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Perfil</TableHead>
           </TableRow>
@@ -60,7 +64,7 @@ export const ParticipantsTable = ({ participants }: ParticipantsTableProps) => {
         <TableBody>
           {participants.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={6} className="text-center text-muted-foreground">
+              <TableCell colSpan={8} className="text-center text-muted-foreground">
                 Nenhum participante encontrado
               </TableCell>
             </TableRow>
@@ -71,6 +75,8 @@ export const ParticipantsTable = ({ participants }: ParticipantsTableProps) => {
                 <TableCell>{participant.registration}</TableCell>
                 <TableCell>{participant.email}</TableCell>
                 <TableCell>{participant.cargo}</TableCell>
+                <TableCell>{participant.class_name || "-"}</TableCell>
+                <TableCell>{participant.instructor_name || "-"}</TableCell>
                 <TableCell>
                   {participant.has_completed_test ? (
                     <div className="flex items-center gap-2 text-green-500">
