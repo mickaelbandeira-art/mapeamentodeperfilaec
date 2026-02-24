@@ -30,6 +30,8 @@ interface Participant {
   score_i: number | null;
   score_s: number | null;
   score_c: number | null;
+  class_name: string | null;
+  instructor_name: string | null;
 }
 
 const Dashboard = () => {

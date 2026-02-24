@@ -8,7 +8,6 @@ interface SearchFiltersProps {
   filterCargo: string;
   onCargoChange: (value: string) => void;
   filterStatus: string;
-  filterStatus: string;
   onStatusChange: (value: string) => void;
   filterTurma: string;
   onTurmaChange: (value: string) => void;
