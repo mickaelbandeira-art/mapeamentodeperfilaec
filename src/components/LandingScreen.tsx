@@ -5,7 +5,7 @@ import { WaveBackground } from "./WaveBackground";
 import { DotPattern } from "./DotPattern";
 
 interface LandingScreenProps {
-  onStart: () => void;
+  onStart: (type: 'colaborador' | 'novato') => void;
 }
 
 export const LandingScreen = ({ onStart }: LandingScreenProps) => {
@@ -14,20 +14,20 @@ export const LandingScreen = ({ onStart }: LandingScreenProps) => {
       <WaveBackground />
       <DotPattern position="top-right" />
       <DotPattern position="bottom-left" />
-      
+
       <Card className="max-w-5xl w-full p-6 sm:p-8 md:p-12 lg:p-16 glass-card shadow-2xl relative z-10 animate-fade-in">
         <div className="text-center space-y-6 md:space-y-8">
           <div className="inline-flex p-5 rounded-full bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 mb-4 animate-float shadow-lg glow-purple">
             <Brain className="w-12 h-12 md:w-16 md:h-16 text-white" />
           </div>
-          
+
           <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-gradient-hero leading-tight px-4">
             Mapeamento de Perfil DISC
           </h1>
-          
+
           <p className="text-lg sm:text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto leading-relaxed px-4">
-            Descubra seu perfil comportamental através de uma jornada interativa. 
-            <span className="text-gradient-primary font-semibold"> 30 perguntas </span> 
+            Descubra seu perfil comportamental através de uma jornada interativa.
+            <span className="text-gradient-primary font-semibold"> 30 perguntas </span>
             que revelam sua essência.
           </p>
 
@@ -37,19 +37,19 @@ export const LandingScreen = ({ onStart }: LandingScreenProps) => {
               <h3 className="font-bold text-base sm:text-lg text-disc-dominance mb-1">Dominante</h3>
               <p className="text-xs sm:text-sm text-gray-400">Resultados</p>
             </div>
-            
+
             <div className="p-4 sm:p-6 rounded-xl glass-card-hover glow-hover-purple group">
               <Users className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-3 text-disc-influence transition-transform group-hover:scale-110" />
               <h3 className="font-bold text-base sm:text-lg text-disc-influence mb-1">Influente</h3>
               <p className="text-xs sm:text-sm text-gray-400">Pessoas</p>
             </div>
-            
+
             <div className="p-4 sm:p-6 rounded-xl glass-card-hover glow-hover-purple group">
               <LineChart className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-3 text-disc-stability transition-transform group-hover:scale-110" />
               <h3 className="font-bold text-base sm:text-lg text-disc-stability mb-1">Estável</h3>
               <p className="text-xs sm:text-sm text-gray-400">Harmonia</p>
             </div>
-            
+
             <div className="p-4 sm:p-6 rounded-xl glass-card-hover glow-hover-purple group">
               <Brain className="w-8 h-8 sm:w-10 sm:h-10 mx-auto mb-3 text-disc-conformity transition-transform group-hover:scale-110" />
               <h3 className="font-bold text-base sm:text-lg text-disc-conformity mb-1">Conforme</h3>
@@ -57,21 +57,30 @@ export const LandingScreen = ({ onStart }: LandingScreenProps) => {
             </div>
           </div>
 
-          <div className="space-y-4 pt-4 md:pt-6">
-            <Button 
-              onClick={onStart} 
+          <div className="flex flex-col sm:flex-row justify-center gap-4 pt-4 md:pt-6">
+            <Button
+              onClick={() => onStart('colaborador')}
               size="lg"
-              className="text-base sm:text-lg md:text-xl px-8 sm:px-12 py-6 sm:py-7 bg-gradient-to-r from-purple-600 to-orange-500 hover:from-purple-500 hover:to-orange-400 shadow-2xl glow-purple hover:scale-105 transition-all duration-300 font-bold"
+              className="text-base sm:text-lg px-8 py-6 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 shadow-2xl glow-purple hover:scale-105 transition-all duration-300 font-bold min-w-[200px]"
             >
-              <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 mr-2" />
-              Iniciar Teste
+              <Users className="w-5 h-5 mr-2" />
+              Sou Colaborador
             </Button>
-            
-            <p className="text-sm sm:text-base text-gray-400 flex items-center justify-center gap-2">
-              <span className="text-xl sm:text-2xl">⏱️</span> 
-              Tempo estimado: 5-7 minutos
-            </p>
+
+            <Button
+              onClick={() => onStart('novato')}
+              size="lg"
+              className="text-base sm:text-lg px-8 py-6 bg-gradient-to-r from-orange-600 to-pink-500 hover:from-orange-500 hover:to-pink-400 shadow-2xl glow-orange hover:scale-105 transition-all duration-300 font-bold min-w-[200px]"
+            >
+              <Sparkles className="w-5 h-5 mr-2" />
+              Sou Novato
+            </Button>
           </div>
+
+          <p className="text-sm sm:text-base text-gray-400 flex items-center justify-center gap-2 mt-4">
+            <span className="text-xl sm:text-2xl">⏱️</span>
+            Tempo estimado: 5-7 minutos
+          </p>
         </div>
       </Card>
     </div>

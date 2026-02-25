@@ -1,6 +1,7 @@
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search } from "lucide-react";
+import { Search, MapPin } from "lucide-react";
+import { SITES } from "../RegistrationScreen";
 
 interface SearchFiltersProps {
   searchText: string;
@@ -13,9 +14,12 @@ interface SearchFiltersProps {
   onTurmaChange: (value: string) => void;
   filterInstructor: string;
   onInstructorChange: (value: string) => void;
+  filterSite: string;
+  onSiteChange: (value: string) => void;
   cargos: string[];
   turmas: string[];
   instructors: { name: string; email: string }[];
+  showSiteFilter?: boolean;
 }
 
 export const SearchFilters = ({
@@ -32,6 +36,9 @@ export const SearchFilters = ({
   cargos,
   turmas,
   instructors,
+  filterSite,
+  onSiteChange,
+  showSiteFilter = false,
 }: SearchFiltersProps) => {
   return (
     <div className="flex flex-col sm:flex-row gap-4">
@@ -51,13 +58,29 @@ export const SearchFilters = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todos os cargos</SelectItem>
-          {cargos.map((cargo) => (
+          {cargos?.map((cargo) => (
             <SelectItem key={cargo} value={cargo}>
               {cargo}
             </SelectItem>
           ))}
         </SelectContent>
       </Select>
+
+      {showSiteFilter && (
+        <Select value={filterSite} onValueChange={onSiteChange}>
+          <SelectTrigger className="w-full sm:w-[150px]">
+            <SelectValue placeholder="Praça" />
+          </SelectTrigger>
+          <SelectContent className="max-h-[300px]">
+            <SelectItem value="all">Todas as Praças</SelectItem>
+            {SITES.map((site) => (
+              <SelectItem key={site} value={site}>
+                {site}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      )}
 
       <Select value={filterStatus} onValueChange={onStatusChange}>
         <SelectTrigger className="w-full sm:w-[150px]">
@@ -76,7 +99,7 @@ export const SearchFilters = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todas as turmas</SelectItem>
-          {turmas.map((turma) => (
+          {turmas?.map((turma) => (
             <SelectItem key={turma} value={turma}>
               {turma}
             </SelectItem>
@@ -90,7 +113,7 @@ export const SearchFilters = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">Todos os instrutores</SelectItem>
-          {instructors.map((instructor) => (
+          {instructors?.map((instructor) => (
             <SelectItem key={instructor.email} value={instructor.email}>
               {instructor.name}
             </SelectItem>

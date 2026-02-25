@@ -7,10 +7,10 @@ import { toast } from "@/hooks/use-toast";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 
 const admins = [
-    { registration: '134187', name: 'JONATHAN LINS DA SILVA', email: 'jonathan.silva@aec.com.br', role: 'admin' },
-    { registration: '227625', name: 'KELCIANE CAVALCANTE DE LIMA', email: 'kelciane.lima@aec.com.br', role: 'coordinator' },
-    { registration: '261064', name: 'IZAURA DE ARAUJO BEZERRA', email: 'a.izaura.bezerrra@aec.com.br', role: 'coordinator' },
-    { registration: '461576', name: 'Mickael Bandeira da Silva', email: 'mickael.bandeira@aec.com.br', role: 'admin' }
+    { registration: '134187', name: 'JONATHAN LINS DA SILVA', email: 'jonathan.silva@aec.com.br', role: 'admin', site: 'MOC1' },
+    { registration: '227625', name: 'KELCIANE CAVALCANTE DE LIMA', email: 'kelciane.lima@aec.com.br', role: 'coordinator', site: 'CG2' },
+    { registration: '261064', name: 'IZAURA DE ARAUJO BEZERRA', email: 'a.izaura.bezerrra@aec.com.br', role: 'coordinator', site: 'JP1' },
+    { registration: '461576', name: 'Mickael Bandeira da Silva', email: 'mickael.bandeira@aec.com.br', role: 'admin', site: 'MOC1' }
 ];
 
 const SetupAdmins = () => {
@@ -33,6 +33,7 @@ const SetupAdmins = () => {
                         data: {
                             full_name: admin.name,
                             matricula: admin.registration,
+                            site: admin.site,
                         }
                     }
                 });
@@ -92,6 +93,7 @@ const SetupAdmins = () => {
                                 <div>
                                     <div className="font-bold">{admin.name}</div>
                                     <div className="text-sm text-gray-400">{admin.email} (Senha: {admin.registration})</div>
+                                    <div className="text-xs text-purple-400 font-mono mt-1">Praça: {admin.site}</div>
                                 </div>
                                 <div>
                                     {results[admin.registration] ? (

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserCog, Users, GraduationCap, Mail, Sparkles } from "lucide-react";
+import { UserCog, Users, GraduationCap, Mail, Sparkles, ArrowLeft } from "lucide-react";
 import { WaveBackground } from "./WaveBackground";
 import { DotPattern } from "./DotPattern";
 import { toast } from "@/hooks/use-toast";
@@ -17,9 +17,10 @@ interface InstructorData {
 
 interface InstructorSetupProps {
     onComplete: (data: InstructorData) => void;
+    onBack: () => void;
 }
 
-export const InstructorSetup = ({ onComplete }: InstructorSetupProps) => {
+export const InstructorSetup = ({ onComplete, onBack }: InstructorSetupProps) => {
     const [instructorName, setInstructorName] = useState("");
     const [instructorRegistration, setInstructorRegistration] = useState("");
     const [instructorEmail, setInstructorEmail] = useState("");
@@ -51,7 +52,17 @@ export const InstructorSetup = ({ onComplete }: InstructorSetupProps) => {
             <DotPattern position="top-right" />
             <DotPattern position="bottom-left" />
 
-            <Card className="max-w-2xl w-full p-6 sm:p-8 md:p-12 glass-card shadow-2xl relative z-10 animate-fade-in">
+            <Card className="max-w-2xl w-full p-6 sm:p-8 md:p-12 glass-card shadow-2xl relative z-10 animate-fade-in pt-16 sm:pt-20">
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={onBack}
+                    className="absolute left-6 top-6 text-gray-400 hover:text-white flex items-center gap-2 group z-50 bg-white/5 border border-white/10 px-3 py-1 rounded-lg"
+                >
+                    <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+                    Voltar
+                </Button>
                 <div className="text-center space-y-6">
                     <div className="inline-flex p-5 rounded-full bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-500 mb-4 animate-float shadow-lg glow-blue">
                         <UserCog className="w-12 h-12 md:w-16 md:h-16 text-white" />

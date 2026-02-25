@@ -21,6 +21,7 @@ interface Participant {
   score_i: number | null;
   score_s: number | null;
   score_c: number | null;
+  site: string | null;
   class_name: string | null;
   instructor_name: string | null;
 }
@@ -55,6 +56,7 @@ export const ParticipantsTable = ({ participants }: ParticipantsTableProps) => {
             <TableHead>Matrícula</TableHead>
             <TableHead>Email</TableHead>
             <TableHead>Cargo</TableHead>
+            <TableHead>Praça</TableHead>
             <TableHead>Turma</TableHead>
             <TableHead>Instrutor</TableHead>
             <TableHead>Status</TableHead>
@@ -75,6 +77,11 @@ export const ParticipantsTable = ({ participants }: ParticipantsTableProps) => {
                 <TableCell>{participant.registration}</TableCell>
                 <TableCell>{participant.email}</TableCell>
                 <TableCell>{participant.cargo}</TableCell>
+                <TableCell>
+                  <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20">
+                    {participant.site || "-"}
+                  </Badge>
+                </TableCell>
                 <TableCell>{participant.class_name || "-"}</TableCell>
                 <TableCell>{participant.instructor_name || "-"}</TableCell>
                 <TableCell>

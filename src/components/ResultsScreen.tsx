@@ -14,6 +14,8 @@ interface ResultsScreenProps {
     name: string;
     email: string;
     cpf: string;
+    site: string;
+    class_id?: string;
   };
   instructorData: {
     instructorName: string;
@@ -96,11 +98,13 @@ export const ResultsScreen = ({ scores, participantData, instructorData, onResta
             name: participantData.name,
             email: participantData.email,
             cpf: participantData.cpf,
+            site: participantData.site,
             score_d: scores.D,
             score_i: scores.I,
             score_s: scores.S,
             score_c: scores.C,
             dominant_profile: dominant,
+            class_id: participantData.class_id,
             instructor_name: instructorData.instructorName,
             instructor_registration: instructorData.instructorRegistration,
             instructor_email: instructorData.instructorEmail,

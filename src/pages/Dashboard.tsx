@@ -7,9 +7,12 @@ import { ParticipantsTable } from "@/components/dashboard/ParticipantsTable";
 import { DiscChart } from "@/components/dashboard/DiscChart";
 import { AverageScoresChart } from "@/components/dashboard/AverageScoresChart";
 import { SearchFilters } from "@/components/dashboard/SearchFilters";
-import { Users, CheckCircle, Clock, TrendingUp, LogOut } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { ClassManagement } from "@/components/dashboard/ClassManagement";
+import { Users, CheckCircle, Clock, TrendingUp, LogOut, GraduationCap, ClipboardList } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, MapPin } from "lucide-react";
+import { SITES } from "@/components/RegistrationScreen";
 
 interface DashboardStats {
   total_participants: number;
@@ -30,12 +33,13 @@ interface Participant {
   score_i: number | null;
   score_s: number | null;
   score_c: number | null;
+  site: string | null;
   class_name: string | null;
   instructor_name: string | null;
 }
 
 const Dashboard = () => {
-  const { signOut, userRole } = useAuth();
+  const { signOut, userRole, profile } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,39 +48,96 @@ const Dashboard = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterTurma, setFilterTurma] = useState("all");
   const [filterInstructor, setFilterInstructor] = useState("all");
+  const [filterSite, setFilterSite] = useState("all");
   const [cargos, setCargos] = useState<string[]>([]);
   const [turmas, setTurmas] = useState<string[]>([]);
   const [instructors, setInstructors] = useState<{ name: string; email: string }[]>([]);
 
   useEffect(() => {
     fetchDashboardData();
-  }, [searchText, filterCargo, filterStatus, filterTurma, filterInstructor]);
+  }, [searchText, filterCargo, filterStatus, filterTurma, filterInstructor, filterSite]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
 
       // Fetch stats
-      const { data: statsData, error: statsError } = await supabase
-        .from("dashboard_stats")
-        .select("*")
-        .single();
+      // Fetch stats for the specific site (Resilient)
+      let statsData, statsError;
+      try {
+        let statsQuery = supabase.from("dashboard_stats").select("*");
+        if (profile?.site) {
+          statsQuery = statsQuery.eq("site", profile.site);
+        }
+        const response = await statsQuery.maybeSingle();
+        statsData = response.data;
+        statsError = response.error;
 
-      if (statsError) throw statsError;
-      setStats(statsData);
+        if (statsError && statsError.message?.includes("column")) {
+          console.warn("⚠️ Coluna 'site' ausente em dashboard_stats. Usando stats globais.");
+          const fallback = await supabase.from("dashboard_stats").select("*").maybeSingle();
+          statsData = fallback.data;
+          statsError = fallback.error;
+        }
+      } catch (e) {
+        console.error("Erro ao carregar estatísticas:", e);
+      }
 
-      // Fetch participants with search and filters
-      const { data: participantsData, error: participantsError } = await supabase
-        .rpc("search_participants", {
+      if (statsError) {
+        console.warn("Could not fetch dashboard stats", statsError);
+        setStats(null);
+      } else {
+        setStats(statsData);
+      }
+
+      // Fetch participants with search and filters (Resilient Call)
+      let participantsData, participantsError;
+
+      try {
+        console.log("🔍 Tentando busca filtrada por site...");
+        const response = await supabase.rpc("search_participants", {
           search_text: searchText || null,
-          filter_cargo: filterCargo === "all" ? null : filterCargo,
           filter_status: filterStatus === "all" ? null : filterStatus,
+          filter_cargo: filterCargo === "all" ? null : filterCargo,
+          filter_coordinator: null,
           filter_turma: filterTurma === "all" ? null : filterTurma,
           filter_instructor_email: filterInstructor === "all" ? null : filterInstructor,
+          filter_site: profile?.site || null,
         });
+        participantsData = response.data;
+        participantsError = response.error;
+
+        // Se o erro for de parâmetro/assinatura de função, tentamos o fallback
+        if (participantsError && (participantsError.message?.includes("function") || participantsError.message?.includes("parameter"))) {
+          throw new Error("RPC_OLD_SIGNATURE");
+        }
+      } catch (e: any) {
+        if (e.message === "RPC_OLD_SIGNATURE") {
+          console.warn("⚠️ Função search_participants no banco está desatualizada. Usando busca básica.");
+          const response = await supabase.rpc("search_participants", {
+            search_text: searchText || null,
+            filter_status: filterStatus === "all" ? null : filterStatus,
+            filter_cargo: filterCargo === "all" ? null : filterCargo,
+            filter_turma: filterTurma === "all" ? null : filterTurma,
+            filter_instructor_email: filterInstructor === "all" ? null : filterInstructor
+          });
+          participantsData = response.data;
+          participantsError = response.error;
+        } else {
+          throw e;
+        }
+      }
 
       if (participantsError) throw participantsError;
-      setParticipants(participantsData || []);
+
+      const mappedParticipants = (participantsData as unknown as any[]).map(p => ({
+        ...p,
+        site: p.site || null,
+        class_name: p.class_name || null,
+        instructor_name: p.instructor_name || null
+      })) as Participant[];
+
+      setParticipants(mappedParticipants);
 
       // Get unique values for filters
       const uniqueCargos = [...new Set(participantsData?.map((p: any) => p.cargo).filter(Boolean) || [])];
@@ -148,60 +209,88 @@ const Dashboard = () => {
           </Button>
         </div>
 
-        {/* Stats Cards */}
-        {stats && (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <StatsCard
-              title="Total de Participantes"
-              value={stats.total_participants || 0}
-              icon={Users}
-            />
-            <StatsCard
-              title="Testes Concluídos"
-              value={stats.total_completed_tests || 0}
-              icon={CheckCircle}
-            />
-            <StatsCard
-              title="Testes Pendentes"
-              value={stats.pending_tests || 0}
-              icon={Clock}
-            />
-            <StatsCard
-              title="Taxa de Conclusão"
-              value={`${(stats.completion_rate || 0).toFixed(1)}%`}
-              icon={TrendingUp}
-            />
-          </div>
-        )}
+        <Tabs defaultValue="participants" className="space-y-6">
+          <TabsList className="bg-white/5 border border-white/10 p-1 rounded-xl h-auto gap-2">
+            <TabsTrigger
+              value="participants"
+              className="px-6 py-2.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-2"
+            >
+              <ClipboardList className="w-4 h-4" />
+              Participantes
+            </TabsTrigger>
+            <TabsTrigger
+              value="classes"
+              className="px-6 py-2.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-2"
+            >
+              <GraduationCap className="w-4 h-4" />
+              Gestão de Turmas
+            </TabsTrigger>
+          </TabsList>
 
-        {/* Chart */}
-        {discData.length > 0 && (
-          <div className="grid gap-4 lg:grid-cols-2">
-            <DiscChart data={discData} />
-            <AverageScoresChart participants={participants} />
-          </div>
-        )}
+          <TabsContent value="participants" className="space-y-6 animate-in fade-in duration-500">
+            {/* Stats Cards */}
+            {stats && (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                <StatsCard
+                  title="Total de Participantes"
+                  value={stats.total_participants || 0}
+                  icon={Users}
+                />
+                <StatsCard
+                  title="Testes Concluídos"
+                  value={stats.total_completed_tests || 0}
+                  icon={CheckCircle}
+                />
+                <StatsCard
+                  title="Testes Pendentes"
+                  value={stats.pending_tests || 0}
+                  icon={Clock}
+                />
+                <StatsCard
+                  title="Taxa de Conclusão"
+                  value={`${(stats.completion_rate || 0).toFixed(1)}%`}
+                  icon={TrendingUp}
+                />
+              </div>
+            )}
 
-        {/* Filters and Table */}
-        <div className="space-y-4">
-          <SearchFilters
-            searchText={searchText}
-            onSearchChange={setSearchText}
-            filterCargo={filterCargo}
-            onCargoChange={setFilterCargo}
-            filterStatus={filterStatus}
-            onStatusChange={setFilterStatus}
-            filterTurma={filterTurma}
-            onTurmaChange={setFilterTurma}
-            filterInstructor={filterInstructor}
-            onInstructorChange={setFilterInstructor}
-            cargos={cargos}
-            turmas={turmas}
-            instructors={instructors}
-          />
+            {/* Chart */}
+            {discData.length > 0 && (
+              <div className="grid gap-4 lg:grid-cols-2">
+                <DiscChart data={discData} />
+                <AverageScoresChart participants={participants} />
+              </div>
+            )}
 
-          <ParticipantsTable participants={participants} />
-        </div>
+            {/* Filters and Table */}
+            <div className="space-y-4">
+              <SearchFilters
+                searchText={searchText}
+                onSearchChange={setSearchText}
+                filterCargo={filterCargo}
+                onCargoChange={setFilterCargo}
+                filterStatus={filterStatus}
+                onStatusChange={setFilterStatus}
+                filterTurma={filterTurma}
+                onTurmaChange={setFilterTurma}
+                filterInstructor={filterInstructor}
+                onInstructorChange={setFilterInstructor}
+                instructors={instructors}
+                cargos={cargos}
+                turmas={turmas}
+                filterSite={profile?.site || "all"}
+                onSiteChange={() => { }} // Desativa mudança de site no dashboard
+                showSiteFilter={false} // Esconde filtro de praça para todos
+              />
+
+              <ParticipantsTable participants={participants} />
+            </div>
+          </TabsContent>
+
+          <TabsContent value="classes" className="animate-in fade-in duration-500">
+            <ClassManagement />
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );

@@ -8,35 +8,41 @@ export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [userRole, setUserRole] = useState<string | null>(null);
+  const [profile, setProfile] = useState<any | null>(null);
 
   useEffect(() => {
     console.log("🔐 Inicializando autenticação...");
-    
+
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
         console.log("🔄 Auth state changed:", event, session?.user?.email);
         setSession(session);
         setUser(session?.user ?? null);
-        
-        // Defer role fetching
+
+        // Defer data fetching
         if (session?.user) {
           setTimeout(() => {
             fetchUserRole(session.user.id);
+            fetchUserProfile(session.user.id);
           }, 0);
         } else {
           setUserRole(null);
+          setProfile(null);
         }
       }
     );
 
     // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
       console.log("📋 Sessão existente:", session?.user?.email);
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
-        fetchUserRole(session.user.id);
+        await Promise.all([
+          fetchUserRole(session.user.id),
+          fetchUserProfile(session.user.id)
+        ]);
       }
       setLoading(false);
     });
@@ -54,13 +60,29 @@ export const useAuth = () => {
         .single();
 
       console.log("📊 Role encontrado:", { data, error });
-      
+
       if (error) throw error;
       setUserRole(data?.role || null);
       console.log("✅ Role configurado:", data?.role);
     } catch (error) {
       console.error("❌ Erro ao buscar role:", error);
       setUserRole(null);
+    }
+  };
+
+  const fetchUserProfile = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", userId)
+        .single();
+
+      if (!error && data) {
+        setProfile(data);
+      }
+    } catch (err) {
+      console.error("Error fetching profile:", err);
     }
   };
 
@@ -112,6 +134,7 @@ export const useAuth = () => {
     session,
     loading,
     userRole,
+    profile,
     signIn,
     signOut,
   };
