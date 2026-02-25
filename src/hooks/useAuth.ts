@@ -171,6 +171,7 @@ export const useAuth = () => {
     userRole,
     profile,
     signIn,
+    signUp,
     signOut,
   };
 };

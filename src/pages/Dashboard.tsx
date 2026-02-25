@@ -130,11 +130,11 @@ const Dashboard = () => {
 
       if (participantsError) throw participantsError;
 
-      const mappedParticipants = (participantsData as unknown as any[]).map(p => ({
+      const mappedParticipants = (participantsData || [] as any[]).map(p => ({
         ...p,
-        site: p.site || null,
-        class_name: p.class_name || null,
-        instructor_name: p.instructor_name || null
+        site: p?.site || null,
+        class_name: p?.class_name || null,
+        instructor_name: p?.instructor_name || null
       })) as Participant[];
 
       setParticipants(mappedParticipants);
