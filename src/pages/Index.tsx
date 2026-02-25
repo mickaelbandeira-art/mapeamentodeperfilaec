@@ -5,7 +5,7 @@ import { QuizScreen } from "@/components/QuizScreen";
 import { ResultsScreen } from "@/components/ResultsScreen";
 import { InstructorSetup } from "@/components/InstructorSetup";
 
-type Screen = 'landing' | 'instructor_setup' | 'registration' | 'quiz' | 'results';
+type Screen = 'landing' | 'instructor_setup' | 'registration' | 'quiz_disc' | 'quiz_mindset' | 'quiz_vac' | 'results';
 
 interface ParticipantData {
   registration: string;
@@ -26,6 +26,8 @@ interface InstructorData {
 const Index = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('landing');
   const [scores, setScores] = useState({ D: 0, I: 0, S: 0, C: 0 });
+  const [mindsetResult, setMindsetResult] = useState<string>("");
+  const [vacResult, setVacResult] = useState<string>("");
   const [participantData, setParticipantData] = useState<ParticipantData | null>(null);
   const [instructorData, setInstructorData] = useState<InstructorData | null>(null);
   const [userType, setUserType] = useState<'colaborador' | 'novato' | null>(null);
@@ -48,15 +50,24 @@ const Index = () => {
   const handleRegistrationComplete = (data: { registration: string; name: string; email: string; cpf: string; site: string; class_id?: string }) => {
     setParticipantData(data);
     if (userType === 'colaborador' || data.class_id) {
-      // Se for colaborador ou se um novato já selecionou a turma, vai direto pro quiz
-      setCurrentScreen('quiz');
+      setCurrentScreen('quiz_disc');
     } else {
       setCurrentScreen('instructor_setup');
     }
   };
 
-  const handleComplete = (finalScores: { D: number; I: number; S: number; C: number }) => {
+  const handleDiscComplete = (finalScores: { D: number; I: number; S: number; C: number }) => {
     setScores(finalScores);
+    setCurrentScreen('quiz_mindset');
+  };
+
+  const handleMindsetComplete = (result: string) => {
+    setMindsetResult(result);
+    setCurrentScreen('quiz_vac');
+  };
+
+  const handleVacComplete = (result: string) => {
+    setVacResult(result);
     setCurrentScreen('results');
   };
 
@@ -87,12 +98,39 @@ const Index = () => {
           onBack={handleBack}
         />
       )}
-      {currentScreen === 'quiz' && participantData && <QuizScreen onComplete={handleComplete} participantData={participantData} />}
+      {currentScreen === 'quiz_disc' && participantData && (
+        <QuizScreen
+          type="DISC"
+          onComplete={handleDiscComplete}
+          participantData={participantData}
+        />
+      )}
+      {currentScreen === 'quiz_mindset' && participantData && (
+        <QuizScreen
+          type="Mindset"
+          onComplete={handleMindsetComplete}
+          participantData={participantData}
+        />
+      )}
+      {currentScreen === 'quiz_vac' && participantData && (
+        <QuizScreen
+          type="VAC"
+          onComplete={handleVacComplete}
+          participantData={participantData}
+        />
+      )}
       {currentScreen === 'results' && participantData && (
         <ResultsScreen
           scores={scores}
+          mindset={mindsetResult}
+          vac={vacResult}
           participantData={participantData}
-          instructorData={instructorData}
+          instructorData={instructorData || {
+            instructorName: "N/A",
+            instructorRegistration: "N/A",
+            instructorEmail: "N/A",
+            className: "Geral"
+          }}
           onRestart={handleRestart}
         />
       )}
