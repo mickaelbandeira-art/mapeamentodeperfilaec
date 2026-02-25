@@ -72,13 +72,20 @@ export const useAuth = () => {
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      console.log("📄 Buscando perfil do usuário:", userId);
       const { data, error } = await supabase
         .from("profiles")
         .select("*")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
 
-      if (!error && data) {
+      if (error) {
+        console.error("❌ Erro ao buscar perfil:", error);
+        return;
+      }
+
+      if (data) {
+        console.log("✅ Perfil carregado:", data.full_name, "| Status:", data.status);
         setProfile(data);
       }
     } catch (err) {
@@ -86,28 +93,56 @@ export const useAuth = () => {
     }
   };
 
+  const signUp = async (email: string, password: string, metadata: any) => {
+    try {
+      console.log("📝 Iniciando processo de cadastro para:", email);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: metadata,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Solicitação enviada!",
+        description: "Seu cadastro foi recebido e aguarda aprovação administrativa.",
+      });
+
+      return { data, error: null };
+    } catch (error: any) {
+      console.error("❌ Erro no cadastro:", error);
+      toast({
+        title: "Erro no cadastro",
+        description: error.message || "Ocorreu um erro ao solicitar acesso.",
+        variant: "destructive",
+      });
+      return { data: null, error };
+    }
+  };
+
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) throw error;
 
-      toast({
-        title: "Login realizado com sucesso!",
-        description: "Bem-vindo de volta.",
-      });
+      // O login no Supabase Auth funciona, mas a validação de status
+      // será feita no onSubmit da página de Login ou no ProtectedRoute
 
-      return { error: null };
+      return { data, error: null };
     } catch (error: any) {
       toast({
         title: "Erro no login",
         description: error.message || "Ocorreu um erro ao fazer login.",
         variant: "destructive",
       });
-      return { error };
+      return { data: null, error };
     }
   };
 

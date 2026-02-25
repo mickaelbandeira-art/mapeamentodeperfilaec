@@ -8,7 +8,9 @@ import { Header } from "@/components/Header";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import Index from "./pages/Index";
 import Login from "./pages/Login";
+import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
+import AdminApproval from "./pages/AdminApproval";
 import NotFound from "./pages/NotFound";
 import SetupAdmins from "./pages/SetupAdmins";
 
@@ -25,11 +27,20 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
             <Route
               path="/dashboard"
               element={
                 <ProtectedRoute allowedRoles={["admin", "manager", "coordinator"]}>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/approvals"
+              element={
+                <ProtectedRoute allowedRoles={["admin"]}>
+                  <AdminApproval />
                 </ProtectedRoute>
               }
             />

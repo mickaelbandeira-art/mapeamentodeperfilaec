@@ -16,6 +16,7 @@ import { SITES } from "@/components/RegistrationScreen";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/hooks/use-toast";
 import aecLogo from "@/assets/aec-logo.png";
+import { Link } from "react-router-dom";
 
 const loginSchema = z.object({
   email: z.string().email({ message: "Email inválido" }),
@@ -99,6 +100,28 @@ const Login = () => {
           console.error("❌ Perfil não encontrado para o ID:", data.user.id);
           await supabase.auth.signOut();
           throw new Error("Seu perfil ainda não foi criado. Entre em contato com o administrador.");
+        }
+
+        // Validação de Status (Aprovação)
+        if (profileData.status && profileData.status !== "approved") {
+          console.warn(`🚫 BLOQUEIO: Usuário com status '${profileData.status}'`);
+          await supabase.auth.signOut();
+          setIsLoading(false);
+
+          if (profileData.status === "pending") {
+            toast({
+              title: "Acesso em Análise",
+              description: "Sua solicitação está aguardando liberação do administrador.",
+              variant: "default",
+            });
+          } else {
+            toast({
+              title: "Acesso Negado",
+              description: "Sua solicitação de acesso não foi aprovada.",
+              variant: "destructive",
+            });
+          }
+          return;
         }
 
         const userSite = profileData.site?.trim().toUpperCase();
@@ -241,6 +264,14 @@ const Login = () => {
               </Button>
             </form>
           </Form>
+          <div className="mt-8 pt-6 border-t border-white/5 text-center">
+            <p className="text-sm text-muted-foreground">
+              Não tem acesso administrative?{" "}
+              <Link to="/register" className="text-primary hover:underline font-medium">
+                Solicitar Cadastro
+              </Link>
+            </p>
+          </div>
         </CardContent>
       </Card>
     </div>
