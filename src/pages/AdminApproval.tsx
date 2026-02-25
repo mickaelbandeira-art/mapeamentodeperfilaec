@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { toast } from "@/hooks/use-toast";
 import { Loader2, UserCheck, UserX, Clock, ShieldCheck, Mail, MapPin, Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Label } from "@/components/ui/label";
 
 const AdminApproval = () => {
     const [pendingUsers, setPendingUsers] = useState<any[]>([]);

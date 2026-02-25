@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Loader2, UserPlus, MapPin, Briefcase, Hash, Mail, Lock } from "lucide-react";
+import { Loader2, UserPlus, MapPin, Briefcase, Hash, Mail, Lock, Sparkles } from "lucide-react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -13,6 +13,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { SITES } from "@/components/RegistrationScreen";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import aecLogo from "@/assets/aec-logo.png";
+import { toast } from "@/hooks/use-toast";
 
 const registerSchema = z.object({
     fullName: z.string().min(3, { message: "Nome completo é obrigatório" }),
@@ -46,21 +47,37 @@ const Register = () => {
 
     const onSubmit = async (values: RegisterFormValues) => {
         setIsLoading(true);
+        console.log("🚀 Iniciando cadastro administrativo:", values);
         try {
-            const { error } = await signUp(values.email, values.password, {
+            const { error, data } = await signUp(values.email, values.password, {
                 full_name: values.fullName,
                 matricula: values.matricula,
                 cargo: values.cargo,
                 site: values.site,
                 role: values.role,
+                status: 'pending'
             });
 
+            console.log("📥 Resultado do signUp:", { data, error });
+
             if (!error) {
+                console.log("✅ Cadastro solicitado com sucesso. Redirecionando...");
                 navigate("/login");
             }
+        } catch (err) {
+            console.error("❌ Erro inesperado no onSubmit:", err);
         } finally {
             setIsLoading(false);
         }
+    };
+
+    const onError = (errors: any) => {
+        console.error("🚩 Erros de validação no formulário:", errors);
+        toast({
+            title: "Verifique o formulário",
+            description: "Alguns campos precisam de atenção.",
+            variant: "destructive"
+        });
     };
 
     return (
@@ -77,7 +94,7 @@ const Register = () => {
                 </CardHeader>
                 <CardContent>
                     <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+                        <form onSubmit={form.handleSubmit(onSubmit, onError)} className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 {/* Full Name */}
                                 <FormField
