@@ -10,6 +10,10 @@ export const useAuth = () => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [profile, setProfile] = useState<any | null>(null);
 
+  // Derived: praça (site) do usuário logado
+  const userSite = profile?.site ?? null;
+  const isGlobalAdmin = userRole === 'admin';
+
   useEffect(() => {
     console.log("🔐 Inicializando autenticação...");
 
@@ -170,6 +174,8 @@ export const useAuth = () => {
     loading,
     userRole,
     profile,
+    userSite,
+    isGlobalAdmin,
     signIn,
     signUp,
     signOut,

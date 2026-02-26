@@ -1,9 +1,6 @@
 import { useEffect, useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Brain, Target, Users, LineChart, Download, RotateCcw, Zap, Sparkles, MessageSquare, Briefcase, GraduationCap } from "lucide-react";
-import { WaveBackground } from "./WaveBackground";
-import { DotPattern } from "./DotPattern";
+import { Brain, Target, Users, LineChart, Download, RotateCcw, Zap, Sparkles, MessageSquare, GraduationCap, ArrowRight, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { generateConsultativeInsights } from "@/lib/gemini";
@@ -34,52 +31,40 @@ const profileDescriptions = {
   D: {
     name: "Dominante",
     icon: Target,
-    color: "disc-dominance",
+    color: "var(--secondary)",
     description: "Você é orientado a resultados, direto e focado em desafios. Toma decisões rápidas e gosta de estar no controle.",
-    strengths: ["Determinação", "Liderança", "Foco em resultados", "Coragem para decisões difíceis"],
-    improvements: ["Paciência", "Escuta ativa", "Empatia", "Considerar detalhes"],
-    motivation: "Desafios, autonomia e vitórias",
-    communication: "Seja direto, objetivo e foque em resultados"
+    code: "DOM"
   },
   I: {
     name: "Influente",
     icon: Users,
-    color: "disc-influence",
+    color: "var(--primary)",
     description: "Você é carismático, comunicativo e inspira outros. Gosta de trabalhar em equipe e ser reconhecido.",
-    strengths: ["Comunicação", "Entusiasmo", "Persuasão", "Networking"],
-    improvements: ["Foco", "Atenção aos detalhes", "Organização", "Cumprimento de prazos"],
-    motivation: "Reconhecimento, interação social e variedade",
-    communication: "Seja entusiasmado, positivo e dê reconhecimento"
+    code: "INF"
   },
   S: {
     name: "Estável",
     icon: LineChart,
-    color: "disc-stability",
+    color: "var(--secondary)",
     description: "Você é paciente, leal e busca harmonia. Valoriza relacionamentos duradouros e ambientes estáveis.",
-    strengths: ["Paciência", "Lealdade", "Cooperação", "Confiabilidade"],
-    improvements: ["Adaptação a mudanças", "Assertividade", "Tomar iniciativa", "Expressar opiniões"],
-    motivation: "Segurança, estabilidade e harmonia",
-    communication: "Seja gentil, claro e demonstre apreciação"
+    code: "EST"
   },
-  60: {
+  C: {
     name: "Conforme",
     icon: Brain,
-    color: "disc-conformity",
+    color: "var(--primary)",
     description: "Você é analítico, detalhista e busca perfeição. Valoriza qualidade, precisão e organização.",
-    strengths: ["Análise", "Precisão", "Organização", "Qualidade"],
-    improvements: ["Flexibilidade", "Velocidade", "Aceitar imperfeição", "Tomar riscos"],
-    motivation: "Qualidade, precisão e clareza",
-    communication: "Seja lógico, detalhado e forneça dados"
+    code: "CON"
   }
 };
 
 const getDiscColorCode = (type: string) => {
   switch (type) {
-    case 'D': return '#EF4444';
-    case 'I': return '#F59E0B';
-    case 'S': return '#10B981';
-    case 'C': return '#3B82F6';
-    default: return '#8B5CF6';
+    case 'D': return 'var(--secondary)'; // Signal Orange
+    case 'I': return 'var(--primary)';   // Acid Green
+    case 'S': return 'var(--secondary)';
+    case 'C': return 'var(--primary)';
+    default: return 'var(--foreground)';
   }
 };
 
@@ -96,8 +81,8 @@ export const ResultsScreen = ({ scores, mindset, vac, participantData, instructo
     C: Math.round((scores.C / (total || 1)) * 100)
   };
 
-  const dominant = Object.entries(percentages).sort((a, b) => b[1] - a[1])[0][0] as 'D' | 'I' | 'S' | 'C';
-  const profile = (profileDescriptions as any)[dominant];
+  const dominant = (Object.entries(percentages).sort((a, b) => (b[1] as number) - (a[1] as number))[0]?.[0] || 'D') as 'D' | 'I' | 'S' | 'C';
+  const profile = (profileDescriptions as any)[dominant] || profileDescriptions.D;
   const Icon = profile.icon;
   const { user } = useAuth();
 
@@ -112,13 +97,11 @@ export const ResultsScreen = ({ scores, mindset, vac, participantData, instructo
           userName: participantData.name
         });
 
-        // Validar se a resposta da IA foi gerada com sucesso
         if (!insights || insights.startsWith("Erro") || insights.includes("não pôde ser gerado")) {
           throw new Error(insights || "Falha ao gerar insights da IA.");
         }
 
         setAiInsights(insights);
-
         setIsSaving(true);
         const { error } = await supabase
           .from("test_results")
@@ -141,7 +124,7 @@ export const ResultsScreen = ({ scores, mindset, vac, participantData, instructo
             instructor_registration: instructorData.instructorRegistration,
             instructor_email: instructorData.instructorEmail,
             class_name: instructorData.className,
-            user_id: user?.id || null, // Vínculo com user_id para RLS
+            user_id: user?.id || null,
           });
 
         if (error) throw error;
@@ -162,57 +145,48 @@ export const ResultsScreen = ({ scores, mindset, vac, participantData, instructo
   }, [scores, participantData, dominant, user?.id]);
 
   return (
-    <div className="min-h-screen p-4 py-12 relative overflow-hidden bg-[#0A0A0B]">
-      <WaveBackground />
+    <div className="min-h-screen p-4 py-8 bg-background font-sans">
+      <div className="max-w-7xl mx-auto space-y-8 animate-fade-in relative z-10">
 
-      <div className="max-w-6xl mx-auto space-y-8 relative z-10 transition-all duration-700">
-        {/* Top Header Card */}
-        <Card className="p-8 sm:p-12 glass-card border-white/10 shadow-2xl relative overflow-hidden animate-fade-in">
-          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-600 via-fuchsia-500 to-blue-500" />
-
-          <div className="flex flex-col md:flex-row gap-8 items-center md:items-start text-center md:text-left">
-            <div
-              className="w-24 h-24 sm:w-32 sm:h-32 rounded-3xl flex items-center justify-center relative group shrink-0"
-              style={{ background: `linear-gradient(135deg, ${getDiscColorCode(dominant)} 0%, #000 100%)` }}
-            >
-              <div className="absolute inset-0 rounded-3xl blur-xl opacity-50 bg-current transition-opacity group-hover:opacity-75" />
-              <Icon className="w-12 h-12 sm:w-16 sm:h-16 text-white relative z-10" />
+        {/* Massive Hero Header */}
+        <div className="border-b-8 border-foreground pb-8 flex flex-col md:flex-row justify-between items-end gap-8 overflow-hidden">
+          <div className="space-y-4">
+            <div className="bg-primary text-primary-foreground inline-block px-4 py-1 text-xs font-black uppercase italic tracking-widest translate-x-1">
+              Assessment // Result // Final
             </div>
-
-            <div className="flex-1 space-y-4">
-              <div className="space-y-1">
-                <span className="text-purple-400 font-bold uppercase tracking-[0.2em] text-xs">Mapeamento 360º Completo</span>
-                <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight">
-                  {participantData.name.split(' ')[0]}, seu perfil é <span style={{ color: getDiscColorCode(dominant) }}>{profile.name}</span>
-                </h1>
-              </div>
-              <p className="text-gray-400 text-lg sm:text-xl max-w-3xl leading-relaxed">
-                {profile.description}
-              </p>
-            </div>
+            <h1 className="text-[12vw] md:text-[8vw] font-black leading-[0.8] uppercase italic italic tracking-tighter">
+              {profile.name}
+            </h1>
+            <p className="text-2xl font-bold uppercase text-muted-foreground leading-none">
+              Perfis Dominantes Detectados para {participantData.name.split(' ')[0]}
+            </p>
           </div>
-        </Card>
+          <div className="flex flex-col items-end">
+            <div className="text-8xl font-black italic text-primary leading-none">
+              {percentages[dominant]}%
+            </div>
+            <div className="font-black text-xs uppercase opacity-30">Dominance Level</div>
+          </div>
+        </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
-          {/* Left Column - Core Metrics */}
-          <div className="lg:col-span-1 space-y-8">
-            {/* DISC Chart Card */}
-            <Card className="p-6 glass-card border-white/10">
-              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                <Zap className="w-5 h-5 text-yellow-400" /> Intensidade DISC
+        <div className="grid lg:grid-cols-12 gap-8">
+          {/* Main Visual Data */}
+          <div className="lg:col-span-4 space-y-8">
+            <Card className="p-8 border-4 border-foreground bg-background brutal-card shadow-[10px_10px_0px_var(--secondary)]">
+              <h3 className="text-2xl font-black uppercase italic mb-8 border-b-4 border-foreground pb-2 flex items-center justify-between">
+                DISC Matrix
+                <Zap className="w-6 h-6 text-primary fill-primary" />
               </h3>
-              <div className="space-y-6">
+              <div className="space-y-8">
                 {Object.entries(percentages).map(([type, percentage]) => (
                   <div key={type} className="space-y-2">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="text-gray-300 font-medium">
-                        {(profileDescriptions as any)[type]?.name || type}
-                      </span>
-                      <span className="font-bold text-white" style={{ color: getDiscColorCode(type) }}>{percentage}%</span>
+                    <div className="flex justify-between items-end font-black uppercase text-xs">
+                      <span>{(profileDescriptions as any)[type]?.name}</span>
+                      <span className="text-xl italic">{percentage}%</span>
                     </div>
-                    <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                    <div className="h-6 border-4 border-foreground bg-background overflow-hidden">
                       <div
-                        className="h-full rounded-full transition-all duration-1000 ease-out"
+                        className="h-full transition-all duration-1000 ease-out"
                         style={{
                           width: `${percentage}%`,
                           backgroundColor: getDiscColorCode(type)
@@ -224,102 +198,115 @@ export const ResultsScreen = ({ scores, mindset, vac, participantData, instructo
               </div>
             </Card>
 
-            {/* Mindset & VAC Card */}
-            <div className="grid grid-cols-1 gap-6">
-              <Card className="p-6 glass-card border-white/10 bg-gradient-to-br from-white/5 to-transparent">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-2xl bg-fuchsia-600/20 text-fuchsia-400">
-                    <Sparkles className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Mindset Predominante</h4>
-                    <p className="text-xl font-bold text-white">{mindset}</p>
-                  </div>
-                </div>
-              </Card>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="border-4 border-foreground p-6 bg-primary text-primary-foreground rotate-[-2deg] brutal-card">
+                <Sparkles className="w-8 h-8 mb-4" />
+                <h4 className="text-[10px] font-black uppercase tracking-widest opacity-70">Mindset</h4>
+                <p className="text-xl font-black uppercase italic leading-none">{mindset}</p>
+              </div>
+              <div className="border-4 border-foreground p-6 bg-secondary text-secondary-foreground rotate-[2deg] brutal-card">
+                <MessageSquare className="w-8 h-8 mb-4" />
+                <h4 className="text-[10px] font-black uppercase tracking-widest opacity-70">Canal VAC</h4>
+                <p className="text-xl font-black uppercase italic leading-none">{vac}</p>
+              </div>
+            </div>
 
-              <Card className="p-6 glass-card border-white/10 bg-gradient-to-br from-white/5 to-transparent">
-                <div className="flex items-center gap-4">
-                  <div className="p-3 rounded-2xl bg-blue-600/20 text-blue-400">
-                    <MessageSquare className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Canal VAC (Comunicação)</h4>
-                    <p className="text-xl font-bold text-white">{vac}</p>
-                  </div>
-                </div>
-              </Card>
+            <div className="border-4 border-foreground p-8 bg-foreground text-background">
+              <Icon className="w-12 h-12 mb-6" />
+              <p className="font-bold text-sm leading-tight uppercase">
+                {profile.description}
+              </p>
             </div>
           </div>
 
-          {/* Right Column - AI Insights */}
-          <div className="lg:col-span-2 space-y-6">
-            <Card className="p-8 glass-card border-white/10 min-h-[400px] relative overflow-hidden flex flex-col">
-              <div className="flex items-center justify-between mb-8">
-                <h3 className="text-2xl font-bold text-white flex items-center gap-3">
-                  <div className="p-2 rounded-lg bg-purple-600/20">
-                    <Brain className="w-6 h-6 text-purple-400" />
-                  </div>
-                  Insights da IA Consultiva AeC
-                </h3>
+          {/* AI Insights & Actions */}
+          <div className="lg:col-span-8 flex flex-col gap-8">
+            <div className="flex-1 border-4 border-foreground bg-background p-8 md:p-12 relative overflow-hidden flex flex-col shadow-[15px_15px_0px_var(--foreground)]">
+              {/* Background Label */}
+              <div className="absolute top-0 right-0 text-[10vw] font-black italic opacity-5 pointer-events-none select-none -mr-10 -mt-10 uppercase">
+                Insights
               </div>
 
-              {isGeneratingAi ? (
-                <div className="flex-1 flex flex-col items-center justify-center space-y-4">
-                  <div className="w-16 h-16 border-4 border-purple-600/30 border-t-purple-600 rounded-full animate-spin" />
-                  <div className="text-center">
-                    <p className="text-white font-bold text-lg animate-pulse">Cruzando dados de DISC, Mindset e VAC...</p>
-                    <p className="text-gray-400 text-sm">Gerando seu plano de desenvolvimento personalizado</p>
+              <div className="relative z-10 flex flex-col h-full">
+                <div className="flex items-center gap-4 mb-12">
+                  <div className="w-16 h-16 bg-foreground text-background flex items-center justify-center border-4 border-foreground shrink-0">
+                    <Brain className="w-10 h-10" />
                   </div>
+                  <h3 className="text-4xl font-black uppercase italic italic leading-none tracking-tighter">
+                    IA Consultiva<br />
+                    <span className="text-primary">Estratégica</span>
+                  </h3>
                 </div>
-              ) : (
-                <div className="flex-1 text-gray-300 prose prose-invert max-w-none prose-headings:text-white prose-p:leading-relaxed overflow-auto max-h-[600px] pr-4 custom-scrollbar">
-                  {aiInsights ? (
-                    <div className="whitespace-pre-wrap leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-1000">
-                      {aiInsights.split('\n').map((line, i) => {
-                        if (line.startsWith('#')) return <h3 key={i} className="text-xl font-bold text-white mt-6 mb-3">{line.replace(/^#+\s*/, '')}</h3>;
-                        if (line.startsWith('-')) return <li key={i} className="ml-4 mb-2 list-none flex gap-2"><span className="text-purple-400">•</span> {line.replace(/^-/, '')}</li>;
-                        return <p key={i} className="mb-4">{line}</p>;
-                      })}
+
+                {isGeneratingAi ? (
+                  <div className="flex-1 flex flex-col items-center justify-center space-y-6">
+                    <Loader2 className="w-16 h-16 animate-spin text-primary" />
+                    <div className="text-center">
+                      <p className="text-2xl font-black uppercase italic animate-pulse">Cruzando Dados...</p>
+                      <p className="text-xs font-bold text-muted-foreground uppercase">Analisando DISC + Mindset + VAC</p>
                     </div>
-                  ) : (
-                    <p className="text-center text-gray-500 mt-20 italic">Aguardando geração dos insights...</p>
-                  )}
-                </div>
-              )}
-            </Card>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-end items-center">
-              <div className="text-sm text-gray-500 italic mr-auto mb-4 sm:mb-0">
-                Mapeamento interpretado por Inteligência Artificial Consultiva.
+                  </div>
+                ) : (
+                  <div className="flex-1 overflow-auto pr-4 custom-scrollbar">
+                    {aiInsights && aiInsights.length > 0 ? (
+                      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                        {String(aiInsights).split('\n').map((line, i) => {
+                          if (line.trim() === '') return null;
+                          if (line.startsWith('#')) {
+                            return <h3 key={i} className="text-2xl font-black uppercase italic border-l-8 border-primary pl-4 mt-8 mb-4">{line.replace(/^#+\s*/, '')}</h3>;
+                          }
+                          if (line.startsWith('-')) {
+                            return (
+                              <div key={i} className="flex gap-4 items-start group">
+                                <ArrowRight className="w-5 h-5 mt-1 shrink-0 text-primary group-hover:translate-x-1 transition-transform" />
+                                <p className="font-bold text-sm md:text-base uppercase leading-tight italic">{line.replace(/^-/, '')}</p>
+                              </div>
+                            );
+                          }
+                          return <p key={i} className="text-sm font-medium leading-relaxed opacity-70">{line}</p>;
+                        })}
+                      </div>
+                    ) : (
+                      <div className="h-full flex items-center justify-center opacity-20">
+                        <p className="text-6xl font-black uppercase italic">No Data</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
-              <Button
-                variant="outline"
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+              <button
                 onClick={onRestart}
-                className="bg-transparent border-white/10 hover:bg-white/5 text-gray-300 hover:text-white"
+                className="flex-1 border-4 border-foreground bg-background p-6 font-black uppercase italic hover:bg-secondary hover:text-secondary-foreground transition-all shadow-[8px_8px_0px_var(--foreground)] active:shadow-none active:translate-x-1 active:translate-y-1"
               >
-                <RotateCcw className="w-4 h-4 mr-2" />
-                Refazer Teste
-              </Button>
-              <Button
+                <div className="flex items-center justify-center gap-2">
+                  <RotateCcw className="w-5 h-5" />
+                  Reiniciar
+                </div>
+              </button>
+              <button
                 onClick={() => window.print()}
-                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:opacity-90 text-white font-bold"
+                className="flex-[2] border-4 border-foreground bg-foreground text-background p-6 font-black uppercase italic hover:bg-primary hover:text-primary-foreground transition-all shadow-[8px_8px_0px_var(--secondary)] active:shadow-none active:translate-x-1 active:translate-y-1"
               >
-                <Download className="w-4 h-4 mr-2" />
-                Salvar PDF
-              </Button>
+                <div className="flex items-center justify-center gap-2">
+                  <Download className="w-5 h-5" />
+                  Exportar Resultado
+                </div>
+              </button>
             </div>
           </div>
         </div>
 
-        {/* Footer Info */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500 mt-12 border-t border-white/5 pt-6">
-          <div className="flex items-center gap-4">
-            <span className="flex items-center gap-1"><GraduationCap className="w-3 h-3" /> Turma: {instructorData.className}</span>
-            <span className="flex items-center gap-1"><Users className="w-3 h-3" /> Instrutor: {instructorData.instructorName}</span>
+        {/* System Meta */}
+        <div className="pt-8 border-t-8 border-foreground flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-black uppercase opacity-30 italic">
+          <div className="flex gap-6">
+            <span>Turma: {instructorData.className}</span>
+            <span>Instrutor: {instructorData.instructorName}</span>
           </div>
-          <div className="md:text-right">
-            <span>© 2024 AeC - Perfil 360º Consultivo Inteligente</span>
+          <div className="bg-foreground text-background px-2 py-1">
+            AeC // ASSESSMENT // v2.0 // © 2024
           </div>
         </div>
       </div>

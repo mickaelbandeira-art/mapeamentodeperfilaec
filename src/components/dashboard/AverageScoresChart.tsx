@@ -1,5 +1,3 @@
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Cell } from "recharts";
 
 interface AverageScoresChartProps {
@@ -7,11 +5,14 @@ interface AverageScoresChartProps {
 }
 
 export const AverageScoresChart = ({ participants }: AverageScoresChartProps) => {
-    // Calculate averages
     const completedTests = participants.filter(p => p.has_completed_test);
     const total = completedTests.length;
 
-    if (total === 0) return null;
+    if (total === 0) return (
+        <div className="h-[300px] flex items-center justify-center opacity-20">
+            <span className="font-black uppercase italic text-4xl">No_Data_Stream</span>
+        </div>
+    );
 
     const sums = completedTests.reduce(
         (acc, p) => ({
@@ -24,36 +25,61 @@ export const AverageScoresChart = ({ participants }: AverageScoresChartProps) =>
     );
 
     const data = [
-        { name: "Dominância", score: Math.round(sums.D / total), color: "hsl(var(--disc-dominance))" },
-        { name: "Influência", score: Math.round(sums.I / total), color: "hsl(var(--disc-influence))" },
-        { name: "Estabilidade", score: Math.round(sums.S / total), color: "hsl(var(--disc-stability))" },
-        { name: "Conformidade", score: Math.round(sums.C / total), color: "hsl(var(--disc-conformity))" },
+        { name: "DOM", full: "Dominância", score: Math.round(sums.D / total), color: "var(--secondary)" },
+        { name: "INF", full: "Influência", score: Math.round(sums.I / total), color: "var(--primary)" },
+        { name: "EST", full: "Estabilidade", score: Math.round(sums.S / total), color: "var(--secondary)" },
+        { name: "CON", full: "Conformidade", score: Math.round(sums.C / total), color: "var(--primary)" },
     ];
 
     return (
-        <Card className="col-span-1">
-            <CardHeader>
-                <CardTitle>Média de Pontuação por Perfil</CardTitle>
-            </CardHeader>
-            <CardContent>
-                <div className="h-[300px]">
-                    <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={data}>
-                            <XAxis dataKey="name" stroke="#888888" fontSize={12} tickLine={false} axisLine={false} />
-                            <YAxis stroke="#888888" fontSize={12} tickLine={false} axisLine={false} tickFormatter={(value) => `${value}`} />
-                            <Tooltip
-                                cursor={{ fill: 'transparent' }}
-                                contentStyle={{ backgroundColor: 'hsl(var(--card))', borderColor: 'hsl(var(--border))' }}
-                            />
-                            <Bar dataKey="score" radius={[4, 4, 0, 0]}>
-                                {data.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.color} />
-                                ))}
-                            </Bar>
-                        </BarChart>
-                    </ResponsiveContainer>
-                </div>
-            </CardContent>
-        </Card>
+        <div className="h-[300px] w-full relative">
+            <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
+                    <XAxis
+                        dataKey="name"
+                        stroke="var(--foreground)"
+                        fontSize={10}
+                        fontWeight={900}
+                        tickLine={true}
+                        axisLine={true}
+                        tick={{ fill: 'var(--foreground)', fontStyle: 'italic' }}
+                    />
+                    <YAxis
+                        stroke="var(--foreground)"
+                        fontSize={10}
+                        fontWeight={900}
+                        tickLine={true}
+                        axisLine={true}
+                        tick={{ fill: 'var(--foreground)', fontStyle: 'italic' }}
+                    />
+                    <Tooltip
+                        cursor={{ fill: 'var(--foreground)', opacity: 0.1 }}
+                        contentStyle={{
+                            backgroundColor: 'var(--foreground)',
+                            border: '4px solid var(--secondary)',
+                            borderRadius: '0px',
+                            padding: '10px'
+                        }}
+                        itemStyle={{
+                            color: 'var(--background)',
+                            fontWeight: '900',
+                            textTransform: 'uppercase',
+                            fontStyle: 'italic',
+                            fontSize: '10px'
+                        }}
+                    />
+                    <Bar dataKey="score" stroke="var(--foreground)" strokeWidth={4}>
+                        {data.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                    </Bar>
+                </BarChart>
+            </ResponsiveContainer>
+
+            {/* Background Texture */}
+            <div className="absolute top-0 right-0 pointer-events-none opacity-5 text-[80px] font-black italic uppercase -mr-4 -mt-4 leading-none select-none">
+                Metrics
+            </div>
+        </div>
     );
 };

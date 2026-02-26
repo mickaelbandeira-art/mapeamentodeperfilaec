@@ -10,7 +10,8 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [react()].filter(Boolean),
   define: {
-    "process.env.GOOGLE_API_KEY": JSON.stringify(process.env.GOOGLE_API_KEY || "AIzaSyATNe2HfqhHejrGajCSf0Hi7uOUMXv8BjU"),
+    "process.env.GOOGLE_API_KEY": JSON.stringify(process.env.GOOGLE_API_KEY || ""),
+    "process.env.VITE_GOOGLE_API_KEY": JSON.stringify(process.env.VITE_GOOGLE_API_KEY || ""),
   },
   resolve: {
     alias: {

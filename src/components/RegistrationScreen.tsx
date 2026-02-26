@@ -1,15 +1,8 @@
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { UserCircle, Sparkles, Loader2, CheckCircle2, ArrowLeft, GraduationCap } from "lucide-react";
-import { WaveBackground } from "./WaveBackground";
-import { DotPattern } from "./DotPattern";
+import { UserCircle, Sparkles, Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { MapPin } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface RegistrationScreenProps {
   onComplete: (data: { registration: string; name: string; email: string; cpf: string; site: string; class_id?: string }) => void;
@@ -36,16 +29,23 @@ export const RegistrationScreen = ({ onComplete, initialMode, onBack }: Registra
   const [isAutoFilled, setIsAutoFilled] = useState(false);
 
   useEffect(() => {
-    fetchClasses();
-  }, []);
+    if (selectedSite) {
+      fetchClassesBySite(selectedSite);
+    } else {
+      setClasses([]);
+    }
+  }, [selectedSite]);
 
-  const fetchClasses = async () => {
+  const fetchClassesBySite = async (site: string) => {
     try {
-      const { data, error } = await supabase
+      const query = supabase
         .from("training_classes")
         .select("id, name")
         .eq("is_active", true)
         .order("name");
+
+      // Filter by site if site column exists (post-migration)
+      const { data, error } = await query.or(`site.eq.${site},site.eq.`);
       if (error) throw error;
       setClasses(data || []);
     } catch (error) {
@@ -118,10 +118,10 @@ export const RegistrationScreen = ({ onComplete, initialMode, onBack }: Registra
         return;
       }
     } else {
-      if (!name || !cpf || !selectedSite || !selectedClassId) {
+      if (!name || (!cpf && mode === 'novato') || !selectedSite || (mode === 'novato' && !selectedClassId)) {
         toast({
           title: "Campos obrigatórios",
-          description: "Por favor, preencha seu nome, CPF, praça e selecione sua turma.",
+          description: "Por favor, preencha todos os campos obrigatórios (*).",
           variant: "destructive",
         });
         return;
@@ -139,199 +139,192 @@ export const RegistrationScreen = ({ onComplete, initialMode, onBack }: Registra
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 pt-20 relative overflow-hidden">
-      <WaveBackground />
-      <DotPattern position="top-right" />
-      <DotPattern position="bottom-left" />
-
-      <Card className="max-w-2xl w-full p-6 sm:p-8 md:p-12 glass-card shadow-2xl relative z-10 animate-fade-in pt-16 sm:pt-20">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={onBack}
-          className="absolute left-6 top-6 text-gray-400 hover:text-white flex items-center gap-2 group z-50 bg-white/5 border border-white/10 px-3 py-1 rounded-lg"
-        >
-          <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
-          Voltar
-        </Button>
-        <div className="text-center space-y-6">
-          <div className="inline-flex p-5 rounded-full bg-gradient-to-br from-purple-600 via-pink-600 to-orange-500 mb-4 animate-float shadow-lg glow-purple">
-            <UserCircle className="w-12 h-12 md:w-16 md:h-16 text-white" />
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background font-sans">
+      <div className="max-w-4xl w-full relative z-10 animate-fade-in border-4 border-foreground bg-background shadow-[15px_15px_0px_var(--secondary)] overflow-hidden">
+        {/* Header Ribbon */}
+        <div className="bg-foreground text-background p-4 flex justify-between items-center border-b-4 border-foreground">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-2 font-black text-xs uppercase hover:text-primary transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            Voltar
+          </button>
+          <div className="font-black text-xs uppercase tracking-tighter italic">
+            AEC // REGISTRATION_MODULE // {mode.toUpperCase()}
           </div>
+        </div>
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gradient-hero leading-tight">
-            {mode === 'colaborador' ? 'Acesso Colaborador' : 'Cadastro Novato'}
-          </h1>
-
-          <p className="text-lg text-gray-400">
-            {mode === 'colaborador'
-              ? 'Identifique-se com sua matrícula para iniciar'
-              : 'Preencha seus dados para iniciar o mapeamento'}
-          </p>
-
-          <form onSubmit={handleSubmit} className="space-y-6 text-left">
-            {mode === 'colaborador' && (
-              <div className="space-y-2">
-                <Label htmlFor="registration" className="text-base flex items-center gap-2">
-                  <span className="text-purple-400">#</span> Matrícula *
-                </Label>
-                <div className="relative">
-                  <Input
-                    id="registration"
-                    type="text"
-                    placeholder="Digite sua matrícula"
-                    value={registration}
-                    onChange={(e) => setRegistration(e.target.value)}
-                    className="h-12 text-base glass-card-hover border-border/50"
-                    required
-                  />
-                  {loading && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                      <Loader2 className="h-5 w-5 animate-spin text-purple-400" />
-                    </div>
-                  )}
-                </div>
+        <div className="flex flex-col md:flex-row divide-y-4 md:divide-y-0 md:divide-x-4 divide-foreground">
+          {/* Left Panel: Context */}
+          <div className="md:w-1/3 p-8 bg-primary/5 flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="bg-foreground text-background inline-block px-3 py-1 text-[10px] font-black uppercase">
+                Etapa 01
               </div>
-            )}
-
-            <div className="space-y-2">
-              <Label htmlFor="name" className="text-base flex items-center gap-2">
-                <UserCircle className="w-4 h-4 text-purple-400" /> Nome Completo *
-              </Label>
-              <Input
-                id="name"
-                type="text"
-                placeholder="Digite seu nome completo"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className={`h-12 text-base glass-card-hover border-border/50 ${isAutoFilled ? "border-green-500/50 bg-green-500/5" : ""
-                  }`}
-                disabled={loading}
-                readOnly={isAutoFilled}
-                required
-              />
+              <h1 className="text-4xl font-black leading-none uppercase italic">
+                {mode === 'colaborador' ? 'Acesso' : 'Cadastro'}<br />
+                <span className="text-primary text-6xl">{mode === 'colaborador' ? 'MTR' : 'NVT'}</span>
+              </h1>
+              <p className="text-sm font-bold text-muted-foreground uppercase leading-tight">
+                {mode === 'colaborador'
+                  ? 'Identifique-se com sua matrícula AeC para iniciar o mapeamento.'
+                  : 'Preencha seus dados para criar sua identidade no sistema.'}
+              </p>
             </div>
 
-            {mode === 'novato' && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="cpf" className="text-base flex items-center gap-2">
-                    <span className="text-purple-400">ID</span> CPF *
-                  </Label>
-                  <Input
-                    id="cpf"
-                    type="text"
-                    placeholder="000.000.000-00"
-                    value={cpf}
-                    onChange={(e) => setCpf(e.target.value)}
-                    className="h-12 text-base glass-card-hover border-border/50"
-                    disabled={loading}
-                    required
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="site" className="text-base flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-purple-400" /> Selecione sua Praça *
-                  </Label>
-                  <Select value={selectedSite} onValueChange={setSelectedSite} required>
-                    <SelectTrigger className="h-12 text-base glass-card-hover border-border/50 bg-transparent">
-                      <SelectValue placeholder="Sua praça de atuação" />
-                    </SelectTrigger>
-                    <SelectContent className="glass-card border-white/10 max-h-[300px]">
-                      {SITES.map((site) => (
-                        <SelectItem key={site} value={site} className="focus:bg-purple-500/20">
-                          {site}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="class" className="text-base flex items-center gap-2">
-                    <GraduationCap className="w-4 h-4 text-purple-400" /> Selecione sua Turma *
-                  </Label>
-                  <Select value={selectedClassId} onValueChange={setSelectedClassId} required>
-                    <SelectTrigger className="h-12 text-base glass-card-hover border-border/50 bg-transparent">
-                      <SelectValue placeholder="Escolha sua turma" />
-                    </SelectTrigger>
-                    <SelectContent className="glass-card border-white/10">
-                      {classes.map((c) => (
-                        <SelectItem key={c.id} value={c.id} className="focus:bg-purple-500/20">
-                          {c.name}
-                        </SelectItem>
-                      ))}
-                      {classes.length === 0 && (
-                        <SelectItem value="none" disabled>Nenhuma turma disponível</SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </>
-            )}
-
-            {mode === 'colaborador' && (
-              <>
-                <div className="space-y-2">
-                  <Label htmlFor="colab-site" className="text-base flex items-center gap-2">
-                    <MapPin className="w-4 h-4 text-purple-400" /> Selecione sua Praça *
-                  </Label>
-                  <Select value={selectedSite} onValueChange={setSelectedSite} required>
-                    <SelectTrigger className="h-12 text-base glass-card-hover border-border/50 bg-transparent">
-                      <SelectValue placeholder="Sua praça de atuação" />
-                    </SelectTrigger>
-                    <SelectContent className="glass-card border-white/10 max-h-[300px]">
-                      {SITES.map((site) => (
-                        <SelectItem key={site} value={site} className="focus:bg-purple-500/20">
-                          {site}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-base flex items-center gap-2">
-                    <span className="text-purple-400">@</span> E-mail *
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="seu@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className={`h-12 text-base glass-card-hover border-border/50 ${isAutoFilled ? "border-green-500/50 bg-green-500/5" : ""
-                      }`}
-                    disabled={loading}
-                    readOnly={isAutoFilled}
-                    required
-                  />
-                </div>
-              </>
-            )}
-
-            {isAutoFilled && (
-              <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/30 text-center">
-                <p className="text-green-400 text-sm flex items-center justify-center gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Dados encontrados e preenchidos automaticamente!
-                </p>
+            <div className="pt-8">
+              <div className="p-4 border-2 border-foreground bg-background rotate-[-2deg] brutal-card shadow-sm">
+                <UserCircle className="w-8 h-8 mb-2 text-secondary" />
+                <p className="text-[10px] font-black uppercase opacity-50">Sessão Segura</p>
+                <p className="text-xs font-bold leading-none">Seus dados estão protegidos.</p>
               </div>
-            )}
+            </div>
+          </div>
 
-            <Button
-              type="submit"
-              size="lg"
-              className="w-full text-lg px-8 py-6 bg-gradient-to-r from-purple-600 to-orange-500 hover:from-purple-500 hover:to-orange-400 shadow-2xl glow-purple hover:scale-105 transition-all duration-300 font-bold"
-              disabled={loading}
-            >
-              <Sparkles className="w-5 h-5 mr-2" />
-              Continuar para o Teste
-            </Button>
-          </form>
+          {/* Right Panel: Form */}
+          <div className="flex-1 p-8 md:p-12">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {mode === 'colaborador' && (
+                <div className="space-y-2 group">
+                  <Label htmlFor="registration" className="font-black uppercase text-xs tracking-widest text-foreground flex items-center gap-2">
+                    <span className="text-secondary text-lg">#</span> Matrícula *
+                  </Label>
+                  <div className="relative">
+                    <input
+                      id="registration"
+                      type="text"
+                      placeholder="0000000"
+                      value={registration}
+                      onChange={(e) => setRegistration(e.target.value)}
+                      className="w-full bg-background border-4 border-foreground p-4 font-black text-xl placeholder:text-foreground/20 focus:bg-primary focus:text-primary-foreground focus:outline-none transition-all outline-none"
+                      required
+                    />
+                    {loading && (
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2">
+                        <Loader2 className="h-6 w-6 animate-spin text-foreground" />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-2">
+                <Label htmlFor="name" className="font-black uppercase text-xs tracking-widest text-foreground flex items-center gap-2">
+                  <span className="text-secondary text-lg">@</span> Nome Completo *
+                </Label>
+                <input
+                  id="name"
+                  type="text"
+                  placeholder="DIGITE SEU NOME"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className={`w-full bg-background border-4 border-foreground p-4 font-black text-xl placeholder:text-foreground/20 focus:bg-primary focus:text-primary-foreground focus:outline-none transition-all outline-none ${isAutoFilled ? "bg-primary/10 border-primary" : ""
+                    }`}
+                  disabled={loading}
+                  readOnly={isAutoFilled}
+                  required
+                />
+              </div>
+
+              {mode === 'novato' ? (
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="cpf" className="font-black uppercase text-xs tracking-widest text-foreground">CPF *</Label>
+                    <input
+                      id="cpf"
+                      type="text"
+                      placeholder="000.000.000-00"
+                      value={cpf}
+                      onChange={(e) => setCpf(e.target.value)}
+                      className="w-full bg-background border-4 border-foreground p-4 font-black text-lg focus:bg-primary transition-all outline-none"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="site" className="font-black uppercase text-xs tracking-widest text-foreground">Praça *</Label>
+                    <select
+                      value={selectedSite}
+                      onChange={(e) => setSelectedSite(e.target.value)}
+                      className="w-full bg-background border-4 border-foreground p-4 font-black text-lg appearance-none focus:bg-primary transition-all outline-none"
+                      required
+                    >
+                      <option value="">SELECIONE</option>
+                      {SITES.map((site) => (
+                        <option key={site} value={site}>{site}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label htmlFor="class" className="font-black uppercase text-xs tracking-widest text-foreground">Turma *</Label>
+                    <select
+                      value={selectedClassId}
+                      onChange={(e) => setSelectedClassId(e.target.value)}
+                      className="w-full bg-background border-4 border-foreground p-4 font-black text-lg appearance-none focus:bg-primary transition-all outline-none"
+                      required
+                    >
+                      <option value="">SELECIONE SUA TURMA</option>
+                      {classes.map((c) => (
+                        <option key={c.id} value={c.id}>{c.name}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label htmlFor="site" className="font-black uppercase text-xs tracking-widest text-foreground">Praça *</Label>
+                    <select
+                      value={selectedSite}
+                      onChange={(e) => setSelectedSite(e.target.value)}
+                      className="w-full bg-background border-4 border-foreground p-4 font-black text-lg appearance-none focus:bg-primary transition-all outline-none"
+                      required
+                    >
+                      <option value="">SELECIONE</option>
+                      {SITES.map((site) => (
+                        <option key={site} value={site}>{site}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="font-black uppercase text-xs tracking-widest text-foreground">E-mail *</Label>
+                    <input
+                      id="email"
+                      type="email"
+                      placeholder="EMAIL@AEC.COM.BR"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className={`w-full bg-background border-4 border-foreground p-4 font-black text-lg focus:bg-primary transition-all outline-none ${isAutoFilled ? "bg-primary/10 border-primary" : ""
+                        }`}
+                      disabled={loading}
+                      readOnly={isAutoFilled}
+                      required
+                    />
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-4">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full bg-primary text-primary-foreground font-black text-2xl py-6 border-b-8 border-r-8 border-foreground hover:translate-x-1 hover:translate-y-1 hover:border-b-4 hover:border-r-4 active:border-0 transition-all flex items-center justify-center gap-4 group"
+                >
+                  {loading ? 'PROCESSANDO...' : 'INICIAR TESTE'}
+                  <Sparkles className="w-6 h-6 group-hover:animate-pulse" />
+                </button>
+              </div>
+
+              {isAutoFilled && (
+                <div className="p-4 bg-primary/20 border-2 border-primary font-bold text-xs uppercase flex items-center gap-4">
+                  <CheckCircle2 className="h-5 w-5 text-primary" />
+                  Dados de sistema sincronizados com sucesso.
+                </div>
+              )}
+            </form>
+          </div>
         </div>
-      </Card>
+      </div>
     </div>
   );
 };

@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Button } from "@/components/ui/button";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { ParticipantsTable } from "@/components/dashboard/ParticipantsTable";
 import { DiscChart } from "@/components/dashboard/DiscChart";
@@ -9,10 +8,8 @@ import { AverageScoresChart } from "@/components/dashboard/AverageScoresChart";
 import { SearchFilters } from "@/components/dashboard/SearchFilters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClassManagement } from "@/components/dashboard/ClassManagement";
-import { Users, CheckCircle, Clock, TrendingUp, LogOut, GraduationCap, ClipboardList } from "lucide-react";
+import { Users, CheckCircle, Clock, TrendingUp, LogOut, GraduationCap, ClipboardList, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, MapPin } from "lucide-react";
-import { SITES } from "@/components/RegistrationScreen";
 
 interface DashboardStats {
   total_participants: number;
@@ -42,7 +39,7 @@ interface Participant {
 }
 
 const Dashboard = () => {
-  const { signOut, userRole, profile } = useAuth();
+  const { signOut, profile } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -51,85 +48,47 @@ const Dashboard = () => {
   const [filterStatus, setFilterStatus] = useState("all");
   const [filterTurma, setFilterTurma] = useState("all");
   const [filterInstructor, setFilterInstructor] = useState("all");
-  const [filterSite, setFilterSite] = useState("all");
   const [cargos, setCargos] = useState<string[]>([]);
   const [turmas, setTurmas] = useState<string[]>([]);
   const [instructors, setInstructors] = useState<{ name: string; email: string }[]>([]);
 
   useEffect(() => {
     fetchDashboardData();
-  }, [searchText, filterCargo, filterStatus, filterTurma, filterInstructor, filterSite]);
+  }, [searchText, filterCargo, filterStatus, filterTurma, filterInstructor]);
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
 
-      // Fetch stats
-      // Fetch stats for the specific site (Resilient)
+      // Stats: filter by user's site (RLS on the view handles enforcement)
       let statsData, statsError;
       try {
-        let statsQuery = supabase.from("dashboard_stats").select("*");
-        if (profile?.site) {
-          statsQuery = statsQuery.eq("site", profile.site);
-        }
-        const response = await statsQuery.maybeSingle();
+        const statsQuery = supabase.from("dashboard_stats").select("*");
+        const response = profile?.site
+          ? await statsQuery.eq("site", profile.site).maybeSingle()
+          : await statsQuery.maybeSingle();
         statsData = response.data;
         statsError = response.error;
-
-        if (statsError && statsError.message?.includes("column")) {
-          console.warn("⚠️ Coluna 'site' ausente em dashboard_stats. Usando stats globais.");
-          const fallback = await supabase.from("dashboard_stats").select("*").maybeSingle();
-          statsData = fallback.data;
-          statsError = fallback.error;
-        }
       } catch (e) {
         console.error("Erro ao carregar estatísticas:", e);
       }
 
       if (statsError) {
-        console.warn("Could not fetch dashboard stats", statsError);
         setStats(null);
       } else {
         setStats(statsData);
       }
 
-      // Fetch participants with search and filters (Resilient Call)
-      let participantsData, participantsError;
-
-      try {
-        console.log("🔍 Tentando busca filtrada por site...");
-        const response = await supabase.rpc("search_participants", {
-          search_text: searchText || null,
-          filter_status: filterStatus === "all" ? null : filterStatus,
-          filter_cargo: filterCargo === "all" ? null : filterCargo,
-          filter_coordinator: null,
-          filter_turma: filterTurma === "all" ? null : filterTurma,
-          filter_instructor_email: filterInstructor === "all" ? null : filterInstructor,
-          filter_site: profile?.site || null,
-        });
-        participantsData = response.data;
-        participantsError = response.error;
-
-        // Se o erro for de parâmetro/assinatura de função, tentamos o fallback
-        if (participantsError && (participantsError.message?.includes("function") || participantsError.message?.includes("parameter"))) {
-          throw new Error("RPC_OLD_SIGNATURE");
-        }
-      } catch (e: any) {
-        if (e.message === "RPC_OLD_SIGNATURE") {
-          console.warn("⚠️ Função search_participants no banco está desatualizada. Usando busca básica.");
-          const response = await supabase.rpc("search_participants", {
-            search_text: searchText || null,
-            filter_status: filterStatus === "all" ? null : filterStatus,
-            filter_cargo: filterCargo === "all" ? null : filterCargo,
-            filter_turma: filterTurma === "all" ? null : filterTurma,
-            filter_instructor_email: filterInstructor === "all" ? null : filterInstructor
-          });
-          participantsData = response.data;
-          participantsError = response.error;
-        } else {
-          throw e;
-        }
-      }
+      // Participants: RPC enforces site scoping via auth.uid() in the DB function
+      const { data: participantsData, error: participantsError } = await supabase.rpc("search_participants", {
+        search_text: searchText || null,
+        filter_status: filterStatus === "all" ? null : filterStatus,
+        filter_cargo: filterCargo === "all" ? null : filterCargo,
+        filter_coordinator: null,
+        filter_turma: filterTurma === "all" ? null : filterTurma,
+        filter_instructor_email: filterInstructor === "all" ? null : filterInstructor,
+        filter_site: profile?.site || null, // RPC ignores this for non-admins and uses auth context
+      });
 
       if (participantsError) throw participantsError;
 
@@ -145,7 +104,6 @@ const Dashboard = () => {
 
       setParticipants(mappedParticipants);
 
-      // Get unique values for filters
       const uniqueCargos = [...new Set(participantsData?.map((p: any) => p.cargo).filter(Boolean) || [])];
       setCargos(uniqueCargos as string[]);
 
@@ -193,83 +151,126 @@ const Dashboard = () => {
   if (loading && !stats) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-background pt-20 pb-8">
-      <div className="container mx-auto px-4 space-y-8">
-        {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground">Dashboard Administrativo</h1>
-            <p className="text-muted-foreground mt-1">
-              Painel de controle - Teste DISC
+    <div className="min-h-screen bg-background font-sans pt-24 pb-12 overflow-x-hidden">
+      <div className="max-w-[1600px] mx-auto px-6 space-y-12">
+
+        {/* Radical Header */}
+        <div className="border-b-8 border-foreground pb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
+          <div className="space-y-4">
+            <div className="flex flex-wrap gap-2 items-center">
+              <div className="bg-secondary text-secondary-foreground inline-block px-4 py-1 text-xs font-black uppercase italic tracking-widest translate-x-1">
+                Admin // Control // System
+              </div>
+              {profile?.site && (
+                <div className="bg-primary text-primary-foreground inline-flex items-center gap-1 px-4 py-1 text-xs font-black uppercase italic tracking-widest">
+                  <span>Praça:</span>
+                  <span>{profile.site}</span>
+                </div>
+              )}
+            </div>
+            <h1 className="text-6xl md:text-8xl font-black leading-[0.8] uppercase italic tracking-tighter">
+              Dashboard
+            </h1>
+            <p className="text-xl font-bold uppercase text-muted-foreground leading-none">
+              Monitoramento de Perfil Psicométrico v2.0
             </p>
           </div>
-          <Button variant="outline" onClick={signOut}>
-            <LogOut className="mr-2 h-4 w-4" />
-            Sair
-          </Button>
+          <button
+            onClick={signOut}
+            className="border-4 border-foreground bg-foreground text-background px-8 py-4 font-black uppercase italic hover:bg-primary hover:text-primary-foreground transition-all shadow-[8px_8px_0px_var(--secondary)] active:shadow-none active:translate-x-1 active:translate-y-1 flex items-center gap-2 group"
+          >
+            <LogOut className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+            Logout
+          </button>
         </div>
 
-        <Tabs defaultValue="participants" className="space-y-6">
-          <TabsList className="bg-white/5 border border-white/10 p-1 rounded-xl h-auto gap-2">
+        <Tabs defaultValue="participants" className="space-y-12">
+          {/* Brutalist Tab Bar */}
+          <TabsList className="bg-transparent h-auto p-0 flex flex-wrap gap-4">
             <TabsTrigger
               value="participants"
-              className="px-6 py-2.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-2"
+              className="px-8 py-4 border-4 border-foreground font-black uppercase italic data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-none shadow-[6px_6px_0px_var(--foreground)] translate-x-[-2px] translate-y-[-2px] transition-all flex items-center gap-3"
             >
-              <ClipboardList className="w-4 h-4" />
+              <ClipboardList className="w-5 h-5" />
               Participantes
             </TabsTrigger>
             <TabsTrigger
               value="classes"
-              className="px-6 py-2.5 rounded-lg data-[state=active]:bg-primary data-[state=active]:text-white transition-all gap-2"
+              className="px-8 py-4 border-4 border-foreground font-black uppercase italic data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground data-[state=active]:shadow-none shadow-[6px_6px_0px_var(--foreground)] translate-x-[-2px] translate-y-[-2px] transition-all flex items-center gap-3"
             >
-              <GraduationCap className="w-4 h-4" />
+              <GraduationCap className="w-5 h-5" />
               Gestão de Turmas
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="participants" className="space-y-6 animate-in fade-in duration-500">
-            {/* Stats Cards */}
+          <TabsContent value="participants" className="space-y-12 animate-in slide-in-from-bottom-8 duration-700">
+            {/* Stats Grid */}
             {stats && (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
                 <StatsCard
-                  title="Total de Participantes"
+                  title="Participantes Totais"
                   value={stats.total_participants || 0}
                   icon={Users}
+                  className="bg-background border-4 border-foreground shadow-[10px_10px_0px_var(--foreground)]"
                 />
                 <StatsCard
-                  title="Testes Concluídos"
+                  title="Concluídos"
                   value={stats.total_completed_tests || 0}
                   icon={CheckCircle}
+                  className="bg-primary text-primary-foreground border-4 border-foreground shadow-[10px_10px_0px_var(--foreground)]"
                 />
                 <StatsCard
-                  title="Testes Pendentes"
+                  title="Pendentes"
                   value={stats.pending_tests || 0}
                   icon={Clock}
+                  className="bg-secondary text-secondary-foreground border-4 border-foreground shadow-[10px_10px_0px_var(--foreground)]"
                 />
                 <StatsCard
-                  title="Taxa de Conclusão"
+                  title="Eficiência"
                   value={`${(stats.completion_rate || 0).toFixed(1)}%`}
                   icon={TrendingUp}
+                  className="bg-background border-4 border-foreground shadow-[10px_10px_0px_var(--foreground)]"
                 />
               </div>
             )}
 
-            {/* Chart */}
+            {/* Visual Analytics */}
             {discData.length > 0 && (
-              <div className="grid gap-4 lg:grid-cols-2">
-                <DiscChart data={discData} />
-                <AverageScoresChart participants={participants} />
+              <div className="grid gap-8 lg:grid-cols-12">
+                <div className="lg:col-span-5 border-4 border-foreground p-8 bg-background shadow-[12px_12px_0px_var(--foreground)]">
+                  <h3 className="text-2xl font-black uppercase italic mb-8 border-b-4 border-foreground pb-2 flex items-center justify-between">
+                    Distribuição DISC
+                    <div className="w-2 h-2 bg-primary animate-pulse" />
+                  </h3>
+                  <DiscChart data={discData} />
+                </div>
+                <div className="lg:col-span-7 border-4 border-foreground p-8 bg-background shadow-[12px_12px_0px_var(--foreground)]">
+                  <h3 className="text-2xl font-black uppercase italic mb-8 border-b-4 border-foreground pb-2">
+                    Média de Pontuação
+                  </h3>
+                  <AverageScoresChart participants={participants} />
+                </div>
               </div>
             )}
 
-            {/* Filters and Table */}
-            <div className="space-y-4">
+            {/* Table Core */}
+            <div className="space-y-8 pt-8">
+              <div className="bg-foreground text-background p-4 flex items-center justify-between border-b-4 border-foreground">
+                <span className="font-black uppercase italic text-sm tracking-widest">
+                  Critical_Data // Results_Log
+                </span>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-primary" />
+                  <span className="w-3 h-3 rounded-full bg-secondary" />
+                </div>
+              </div>
+
               <SearchFilters
                 searchText={searchText}
                 onSearchChange={setSearchText}
@@ -285,16 +286,20 @@ const Dashboard = () => {
                 cargos={cargos}
                 turmas={turmas}
                 filterSite={profile?.site || "all"}
-                onSiteChange={() => { }} // Desativa mudança de site no dashboard
-                showSiteFilter={false} // Esconde filtro de praça para todos
+                onSiteChange={() => { }}
+                showSiteFilter={false}
               />
 
-              <ParticipantsTable participants={participants} />
+              <div className="border-4 border-foreground shadow-[15px_15px_0px_var(--foreground)] overflow-hidden">
+                <ParticipantsTable participants={participants} />
+              </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="classes" className="animate-in fade-in duration-500">
-            <ClassManagement />
+          <TabsContent value="classes" className="animate-in slide-in-from-bottom-8 duration-700">
+            <div className="border-4 border-foreground shadow-[15px_15px_0px_var(--foreground)] bg-background">
+              <ClassManagement />
+            </div>
           </TabsContent>
         </Tabs>
       </div>
@@ -304,16 +309,11 @@ const Dashboard = () => {
 
 const getDiscColor = (profile: string) => {
   switch (profile.toUpperCase()) {
-    case "D":
-      return "hsl(var(--disc-dominance))";
-    case "I":
-      return "hsl(var(--disc-influence))";
-    case "S":
-      return "hsl(var(--disc-stability))";
-    case "C":
-      return "hsl(var(--disc-conformity))";
-    default:
-      return "hsl(var(--muted))";
+    case "D": return "var(--secondary)";
+    case "I": return "var(--primary)";
+    case "S": return "var(--secondary)";
+    case "C": return "var(--primary)";
+    default: return "var(--muted)";
   }
 };
 

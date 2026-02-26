@@ -1,5 +1,4 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
 
 interface DiscChartProps {
   data: {
@@ -11,32 +10,56 @@ interface DiscChartProps {
 
 export const DiscChart = ({ data }: DiscChartProps) => {
   return (
-    <Card className="glass-card">
-      <CardHeader>
-        <CardTitle>Distribuição de Perfis DISC</CardTitle>
-      </CardHeader>
-      <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie
-              data={data}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
-              outerRadius={80}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {data.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={entry.color} />
-              ))}
-            </Pie>
-            <Tooltip />
-            <Legend />
-          </PieChart>
-        </ResponsiveContainer>
-      </CardContent>
-    </Card>
+    <div className="h-[300px] w-full relative group">
+      <ResponsiveContainer width="100%" height="100%">
+        <PieChart>
+          <Pie
+            data={data}
+            cx="50%"
+            cy="50%"
+            innerRadius={60}
+            outerRadius={100}
+            paddingAngle={5}
+            dataKey="value"
+            stroke="var(--foreground)"
+            strokeWidth={4}
+          >
+            {data.map((entry, index) => (
+              <Cell
+                key={`cell-${index}`}
+                fill={entry.color}
+                className="hover:opacity-80 transition-opacity cursor-pointer"
+              />
+            ))}
+          </Pie>
+          <Tooltip
+            contentStyle={{
+              backgroundColor: 'var(--foreground)',
+              border: '4px solid var(--primary)',
+              borderRadius: '0px',
+              padding: '10px'
+            }}
+            itemStyle={{
+              color: 'var(--background)',
+              fontWeight: '900',
+              textTransform: 'uppercase',
+              fontStyle: 'italic',
+              fontSize: '10px'
+            }}
+            cursor={{ stroke: 'var(--primary)', strokeWidth: 2 }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+
+      {/* Brutalist Legend */}
+      <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-4 flex-wrap pb-2">
+        {data.map((item, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <div className="w-3 h-3 border-2 border-foreground" style={{ backgroundColor: item.color }} />
+            <span className="text-[10px] font-black uppercase italic">{item.name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
   );
 };

@@ -44,7 +44,7 @@ const Index = () => {
     if (participantData) {
       setParticipantData({ ...participantData, class_id: data.className });
     }
-    setCurrentScreen('quiz');
+    setCurrentScreen('quiz_disc');
   };
 
   const handleRegistrationComplete = (data: { registration: string; name: string; email: string; cpf: string; site: string; class_id?: string }) => {

@@ -1,4 +1,3 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { LucideIcon } from "lucide-react";
 
 interface StatsCardProps {
@@ -6,21 +5,34 @@ interface StatsCardProps {
   value: string | number;
   icon: LucideIcon;
   description?: string;
+  className?: string;
 }
 
-export const StatsCard = ({ title, value, icon: Icon, description }: StatsCardProps) => {
+export const StatsCard = ({ title, value, icon: Icon, description, className }: StatsCardProps) => {
   return (
-    <Card className="glass-card">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </CardHeader>
-      <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+    <div className={`p-8 border-4 border-foreground group hover:translate-x-1 hover:translate-y-1 transition-all ${className}`}>
+      <div className="flex justify-between items-start mb-6">
+        <h3 className="text-[10px] font-black uppercase tracking-[0.2em] opacity-50 group-hover:opacity-100 transition-opacity">
+          {title}
+        </h3>
+        <Icon className="h-6 w-6 group-hover:scale-125 transition-transform" />
+      </div>
+      <div className="space-y-1">
+        <div className="text-5xl font-black italic leading-none tracking-tighter">
+          {value}
+        </div>
         {description && (
-          <p className="text-xs text-muted-foreground mt-1">{description}</p>
+          <p className="text-[10px] font-bold uppercase opacity-40">{description}</p>
         )}
-      </CardContent>
-    </Card>
+      </div>
+      <div className="mt-6 pt-4 border-t-2 border-foreground/10 flex justify-between items-center">
+        <div className="flex gap-1">
+          <div className="w-1 h-1 bg-current" />
+          <div className="w-1 h-1 bg-current opacity-50" />
+          <div className="w-1 h-1 bg-current opacity-20" />
+        </div>
+        <span className="text-[8px] font-black uppercase italic">Live_Metric</span>
+      </div>
+    </div>
   );
 };

@@ -1,88 +1,69 @@
+@import "@fontsource/space-grotesk";
+@import "@fontsource/syne";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* 
+RADICAL DESIGN SYSTEM: Swiss Digital Brutalism
+- No Purple ✅
+- Sharp Geometry (0px-2px) ✅
+- High Contrast (Acid Green / Signal Orange / Black) ✅
+- Massive Typography ✅
 */
 
 @layer base {
   :root {
-    /* Light Mode (Default) */
-    --background: 0 0% 100%;
-    --foreground: 240 10% 3.9%;
+    /* Radical Palette: Acid Green / Signal Orange / Ink Black */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
+    --card: 0 0% 5%;
+    --card-foreground: 0 0% 100%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
+    --popover: 0 0% 5%;
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 270 60% 60%;
-    --primary-foreground: 0 0% 100%;
+    --primary: 84 100% 50%;
+    /* Acid Green */
+    --primary-foreground: 0 0% 0%;
 
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 5.9% 10%;
+    --secondary: 18 100% 50%;
+    /* Signal Orange */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 70%;
 
-    --accent: 280 70% 65%;
-    --accent-foreground: 0 0% 100%;
+    --accent: 45 100% 50%;
+    /* Warning Yellow */
+    --accent-foreground: 0 0% 0%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
+    --destructive: 0 100% 50%;
+    /* Pure Red */
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 240 5.9% 90%;
-    --input: 240 5.9% 90%;
-    --ring: 270 60% 60%;
+    --border: 0 0% 100%;
+    --input: 0 0% 10%;
+    --ring: 84 100% 50%;
 
-    --radius: 0.75rem;
+    --radius: 0px;
+    /* SHARP GEOMETRY */
 
-    /* DISC Colors */
-    --disc-dominance: 0 85% 60%;
-    --disc-influence: 40 100% 60%;
-    --disc-stability: 145 65% 55%;
-    --disc-conformity: 210 85% 60%;
-
-    /* Gradient stops (Light) */
-    --gradient-primary-start: 270 60% 60%;
-    --gradient-primary-end: 30 100% 60%;
-    
-    --gradient-hero-start: 280 70% 55%;
-    --gradient-hero-mid: 320 80% 60%;
-    --gradient-hero-end: 30 100% 60%;
+    /* DISC Colors (Brutalized) */
+    --disc-dominance: 0 100% 50%;
+    --disc-influence: 45 100% 50%;
+    --disc-stability: 145 100% 50%;
+    --disc-conformity: 210 100% 50%;
   }
 
   .dark {
-    /* Dark Mode */
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-
-    --card: 240 10% 8%;
-    --card-foreground: 0 0% 98%;
-
-    --popover: 240 10% 8%;
-    --popover-foreground: 0 0% 98%;
-
-    --primary: 270 60% 60%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 240 5% 15%;
-    --secondary-foreground: 0 0% 98%;
-
-    --muted: 240 5% 15%;
-    --muted-foreground: 240 5% 65%;
-
-    --accent: 280 70% 65%;
-    --accent-foreground: 0 0% 100%;
-
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-
-    --border: 240 10% 15%;
-    --input: 240 10% 15%;
-    --ring: 270 60% 60%;
+    /* Dark is the base in this radical version, keeping for compatibility but focusing on high-contrast black background */
+    --background: 0 0% 0%;
+    --foreground: 0 0% 100%;
+    --border: 0 0% 100%;
+    --ring: 84 100% 50%;
   }
 }
 
@@ -93,65 +74,60 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: 'Space Grotesk', sans-serif;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: 'Syne', sans-serif;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: -0.05em;
   }
 }
 
 @layer utilities {
-  .glass-card {
-    background: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+  .brutal-card {
+    background: var(--background);
+    border: 2px solid var(--border);
+    box-shadow: 8px 8px 0px var(--primary);
+    transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
 
-  .glass-card-hover {
-    background: rgba(255, 255, 255, 0.02);
-    backdrop-filter: blur(15px);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    transition: all 0.3s ease;
+  .brutal-card:hover {
+    transform: translate(-4px, -4px);
+    box-shadow: 12px 12px 0px var(--secondary);
   }
 
-  .glass-card-hover:hover {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.15);
-    transform: translateY(-2px);
+  .brutal-btn {
+    @apply px-6 py-2 border-2 border-foreground font-bold uppercase tracking-tighter transition-all;
+    box-shadow: 4px 4px 0px var(--border);
   }
 
-  .text-gradient-hero {
-    background: linear-gradient(135deg, 
-      hsl(var(--gradient-hero-start)),
-      hsl(var(--gradient-hero-mid)),
-      hsl(var(--gradient-hero-end))
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
+  .brutal-btn:hover {
+    @apply bg-primary text-primary-foreground;
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0px var(--border);
   }
 
-  .text-gradient-primary {
-    background: linear-gradient(135deg, 
-      hsl(var(--gradient-primary-start)),
-      hsl(var(--gradient-primary-end))
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-  }
-
-  .glow-purple {
-    box-shadow: 0 0 30px rgba(168, 85, 247, 0.4),
-                0 0 60px rgba(168, 85, 247, 0.2);
-  }
-
-  .glow-hover-purple:hover {
-    box-shadow: 0 0 20px rgba(168, 85, 247, 0.3),
-                0 0 40px rgba(168, 85, 247, 0.15);
+  .text-stroke {
+    -webkit-text-stroke: 1px white;
+    color: transparent;
   }
 
   @keyframes float {
-    0%, 100% {
+
+    0%,
+    100% {
       transform: translateY(0px);
     }
+
     50% {
       transform: translateY(-10px);
     }
@@ -166,6 +142,7 @@ All colors MUST be HSL.
       opacity: 0;
       transform: translateY(20px);
     }
+
     to {
       opacity: 1;
       transform: translateY(0);
@@ -181,6 +158,7 @@ All colors MUST be HSL.
       opacity: 0;
       transform: translateX(30px);
     }
+
     to {
       opacity: 1;
       transform: translateX(0);
@@ -192,9 +170,12 @@ All colors MUST be HSL.
   }
 
   @keyframes pulse-glow {
-    0%, 100% {
+
+    0%,
+    100% {
       box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
     }
+
     50% {
       box-shadow: 0 0 40px rgba(168, 85, 247, 0.5);
     }
@@ -204,19 +185,18 @@ All colors MUST be HSL.
     animation: pulse-glow 2s ease-in-out infinite;
   }
 
-  @keyframes pulse-logo {
-    0%, 100% {
-      transform: scale(1);
-      opacity: 1;
+  @keyframes marquee {
+    0% {
+      transform: translateX(0);
     }
-    50% {
-      transform: scale(1.05);
-      opacity: 0.85;
+
+    100% {
+      transform: translateX(-50%);
     }
   }
 
-  .animate-pulse-logo {
-    animation: pulse-logo 2s ease-in-out infinite;
+  .animate-marquee {
+    animation: marquee 20s linear infinite;
   }
 }
 

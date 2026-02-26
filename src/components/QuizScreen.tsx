@@ -1,12 +1,9 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { questions as discQuestions } from "@/data/questions";
 import { mindsetQuestions } from "@/data/mindset_questions";
 import { vacQuestions } from "@/data/vac_questions";
-import { ArrowRight, ArrowLeft } from "lucide-react";
-import { WaveBackground } from "./WaveBackground";
+import { ArrowLeft, Sparkles, Loader2 } from "lucide-react";
 
 interface QuizScreenProps {
   type: 'DISC' | 'Mindset' | 'VAC';
@@ -21,8 +18,8 @@ interface QuizScreenProps {
 
 export const QuizScreen = ({ type, onComplete, participantData }: QuizScreenProps) => {
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  
-  // Get the correct questions based on type
+  const [isTransitioning, setIsTransitioning] = useState(false);
+
   const getQuestions = () => {
     switch (type) {
       case 'Mindset': return mindsetQuestions;
@@ -35,112 +32,144 @@ export const QuizScreen = ({ type, onComplete, participantData }: QuizScreenProp
   const [scores, setScores] = useState<any>(
     type === 'DISC' ? { D: 0, I: 0, S: 0, C: 0 } : {}
   );
-  
+
   const progress = ((currentQuestion + 1) / currentQuestions.length) * 100;
   const question = currentQuestions[currentQuestion];
 
   const calculateFinalResult = (finalScores: any) => {
     if (type === 'DISC') return finalScores;
-    
-    // For Mindset and VAC, return the type with the highest score
     const entries = Object.entries(finalScores);
     if (entries.length === 0) return "N/A";
-    
-    return entries.sort((a: any, b: any) => b[1] - a[1])[0][0];
+    return entries.sort((a: any, b: any) => (b[1] as number) - (a[1] as number))[0][0];
   };
 
   const handleAnswer = (answerType: string) => {
+    if (isTransitioning) return;
+
     const newScores = { ...scores };
     newScores[answerType] = (newScores[answerType] || 0) + 1;
     setScores(newScores);
+    setIsTransitioning(true);
 
     if (currentQuestion < currentQuestions.length - 1) {
       setTimeout(() => {
         setCurrentQuestion(currentQuestion + 1);
-      }, 300);
+        setIsTransitioning(false);
+      }, 400);
     } else {
       setTimeout(() => {
         onComplete(calculateFinalResult(newScores));
-      }, 500);
+      }, 600);
     }
   };
 
   const handlePrevious = () => {
-    if (currentQuestion > 0) {
+    if (currentQuestion > 0 && !isTransitioning) {
       setCurrentQuestion(currentQuestion - 1);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-[#0A0A0B]">
-      <WaveBackground />
+    <div className="min-h-screen flex items-center justify-center p-4 bg-background font-sans overflow-hidden">
+      {/* Background Decor */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-5">
+        <div className="absolute top-0 left-0 text-[20vw] font-black leading-none select-none uppercase italic">
+          {type}
+        </div>
+        <div className="absolute bottom-0 right-0 text-[20vw] font-black leading-none select-none uppercase italic">
+          STEP.{currentQuestion + 1}
+        </div>
+      </div>
 
-      <div className="max-w-3xl w-full space-y-6 relative z-10 animate-fade-in">
-        <div className="space-y-4">
-          <div className="flex justify-between items-end">
-            <div>
-              <p className="text-purple-400 font-medium mb-1 tracking-wider uppercase text-xs">Mapeamento {type}</p>
-              <h3 className="text-white text-xl font-bold">Pergunta {currentQuestion + 1} de {currentQuestions.length}</h3>
-            </div>
-            <span className="text-gray-400 text-sm font-medium">{Math.round(progress)}% concluído</span>
-          </div>
-          <div className="h-2 w-full bg-white/5 rounded-full overflow-hidden">
-            <div 
-              className="h-full bg-gradient-to-r from-purple-600 via-fuchsia-500 to-pink-500 transition-all duration-500 rounded-full"
-              style={{ width: `${progress}%` }}
-            />
+      <div className="max-w-4xl w-full relative z-10 animate-fade-in border-4 border-foreground bg-background shadow-[15px_15px_0px_var(--primary)]">
+        {/* Progress Tape */}
+        <div className="bg-foreground text-background h-12 flex items-center overflow-hidden border-b-4 border-foreground relative">
+          <div
+            className="h-full bg-primary transition-all duration-700 ease-out"
+            style={{ width: `${progress}%` }}
+          />
+          <div className="absolute inset-0 flex items-center justify-between px-6 mix-blend-difference font-black text-xs uppercase italic tracking-widest text-background">
+            <span>Progress // {Math.round(progress)}%</span>
+            <span>AEC // ASSESSMENT_UNIT // v2.0</span>
           </div>
         </div>
 
-        <Card className="p-8 sm:p-10 glass-card border-white/10 shadow-2xl relative overflow-hidden group">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-600/10 blur-3xl -mr-16 -mt-16 group-hover:bg-purple-600/20 transition-colors duration-700" />
-          
-          <h2 className="text-2xl sm:text-3xl font-bold mb-10 text-white leading-tight relative z-10">
-            {question.text}
-          </h2>
-
-          <div className="space-y-4 relative z-10">
-            {question.options.map((option: any, index: number) => (
-              <Button
-                key={index}
-                onClick={() => handleAnswer(option.type)}
-                variant="outline"
-                className="w-full text-left justify-start h-auto p-5 text-lg bg-white/5 border-white/10 hover:bg-white/10 hover:border-purple-500/50 hover:text-white transition-all duration-300 group/btn"
-              >
-                <div className="flex items-center gap-4 w-full">
-                  <span className="flex-shrink-0 w-10 h-10 rounded-xl bg-purple-600/20 flex items-center justify-center font-bold text-purple-400 group-hover/btn:bg-purple-600 group-hover/btn:text-white transition-all duration-300">
-                    {String.fromCharCode(65 + index)}
-                  </span>
-                  <span className="flex-1 text-gray-300 group-hover/btn:text-white">{option.text}</span>
+        <div className="p-8 md:p-16">
+          <div className="flex flex-col md:flex-row gap-12">
+            {/* Question Counter Card */}
+            <div className="md:w-1/4">
+              <div className="border-4 border-foreground p-6 brutal-card bg-secondary/10 rotate-[-3deg] shadow-sm">
+                <p className="font-black text-[10px] uppercase opacity-50 mb-1">Question</p>
+                <div className="text-6xl font-black italic leading-none">
+                  {String(currentQuestion + 1).padStart(2, '0')}
                 </div>
-              </Button>
-            ))}
-          </div>
+                <div className="mt-4 pt-4 border-t-4 border-foreground flex justify-between items-center">
+                  <span className="font-black text-[10px] uppercase">Of {currentQuestions.length}</span>
+                  <div className="w-3 h-3 bg-primary animate-pulse" />
+                </div>
+              </div>
 
-          <div className="mt-8 flex items-center justify-between border-t border-white/10 pt-6">
-            <Button
-              onClick={handlePrevious}
-              disabled={currentQuestion === 0}
-              variant="ghost"
-              className="text-gray-400 hover:text-white disabled:opacity-30 disabled:hover:text-gray-400 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Anterior
-            </Button>
-            
-            <div className="flex gap-1">
-              {[...Array(currentQuestions.length)].map((_, i) => (
-                <div 
-                  key={i} 
-                  className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
-                    i === currentQuestion ? 'bg-purple-500 scale-125' : 
-                    i < currentQuestion ? 'bg-purple-500/40' : 'bg-white/10'
-                  }`}
-                />
-              ))}
+              <div className="mt-12 hidden md:block">
+                <button
+                  onClick={handlePrevious}
+                  disabled={currentQuestion === 0 || isTransitioning}
+                  className="w-full border-4 border-foreground p-4 font-black text-xs uppercase flex items-center justify-center gap-2 hover:bg-foreground hover:text-background transition-colors disabled:opacity-20 translate-x-1"
+                >
+                  <ArrowLeft className="w-4 h-4" />
+                  Previous
+                </button>
+              </div>
+            </div>
+
+            {/* Question Content */}
+            <div className={`flex-1 transition-all duration-300 ${isTransitioning ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0'}`}>
+              <div className="mb-4">
+                <span className="bg-foreground text-background px-3 py-1 text-[10px] font-black uppercase tracking-tighter italic">
+                  Critical Assessment // {type}
+                </span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-black leading-[0.9] uppercase italic mb-12 tracking-tighter">
+                {question.text}
+              </h2>
+
+              <div className="grid gap-4">
+                {question.options.map((option: any, index: number) => (
+                  <button
+                    key={index}
+                    onClick={() => handleAnswer(option.type)}
+                    disabled={isTransitioning}
+                    className="group relative w-full text-left border-4 border-foreground p-6 bg-background hover:bg-primary transition-all duration-200 shadow-[8px_8px_0px_var(--foreground)] hover:shadow-[4px_4px_0px_var(--foreground)] hover:translate-x-1 hover:translate-y-1 active:shadow-none active:translate-x-2 active:translate-y-2 disabled:opacity-50"
+                  >
+                    <div className="flex items-center gap-6">
+                      <span className="text-4xl font-black italic opacity-20 group-hover:opacity-100 transition-opacity">
+                        {String.fromCharCode(65 + index)}
+                      </span>
+                      <span className="font-black text-lg md:text-xl uppercase leading-none group-hover:text-primary-foreground">
+                        {option.text}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </Card>
+        </div>
+
+        {/* Footer Ribbon */}
+        <div className="border-t-4 border-foreground p-4 flex justify-between items-center bg-foreground/5 overflow-hidden">
+          <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-tighter">
+            <span className="text-primary italic">Live Session</span>
+            <span className="opacity-30 self-center">•</span>
+            <span>User: {participantData.name.split(' ')[0]}</span>
+          </div>
+          <div className="flex gap-1">
+            {isTransitioning ? (
+              <Loader2 className="w-4 h-4 animate-spin text-primary" />
+            ) : (
+              <Sparkles className="w-4 h-4 text-primary animate-pulse" />
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

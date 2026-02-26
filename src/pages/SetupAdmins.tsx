@@ -1,10 +1,7 @@
-
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, CheckCircle2, XCircle } from "lucide-react";
+import { Loader2, CheckCircle2, XCircle, ShieldCheck, Database, Key } from "lucide-react";
 
 const admins = [
     { registration: '134187', name: 'JONATHAN LINS DA SILVA', email: 'jonathan.silva@aec.com.br', role: 'admin', site: 'MOC1' },
@@ -24,11 +21,9 @@ const SetupAdmins = () => {
         for (const admin of admins) {
             try {
                 console.log(`Creating user: ${admin.email}`);
-
-                // 1. Sign Up User
                 const { error: signUpError } = await supabase.auth.signUp({
                     email: admin.email,
-                    password: admin.registration, // Using matricula as password
+                    password: admin.registration,
                     options: {
                         data: {
                             full_name: admin.name,
@@ -39,79 +34,93 @@ const SetupAdmins = () => {
                 });
 
                 if (signUpError) {
-                    // Check if user already exists
                     if (signUpError.message.includes("User already registered")) {
-                        newResults[admin.registration] = { status: 'success', message: "Usuário já existe." };
+                        newResults[admin.registration] = { status: 'success', message: "USER_EXISTS" };
                     } else {
                         throw signUpError;
                     }
                 } else {
-                    newResults[admin.registration] = { status: 'success', message: "Usuário criado com sucesso!" };
+                    newResults[admin.registration] = { status: 'success', message: "DEPLOYED_OK" };
                 }
-
-                // Logout to ensure clean state for next user (though signUp doesn't automatically login if email confirmation is on, it might if off)
                 await supabase.auth.signOut();
-
             } catch (error: any) {
                 console.error(`Error creating ${admin.email}:`, error);
-                newResults[admin.registration] = { status: 'error', message: error.message };
+                newResults[admin.registration] = { status: 'error', message: "FAIL_RECORD" };
             }
         }
 
         setResults(newResults);
         setLoading(false);
-        toast({
-            title: "Processo Finalizado",
-            description: "Verifique o status de cada usuário abaixo.",
-        });
+        toast({ title: "Setup_Finalized", description: "Verifique o log de execução abaixo." });
     };
 
     return (
-        <div className="min-h-screen flex items-center justify-center p-4">
-            <Card className="w-full max-w-3xl glass-card">
-                <CardHeader>
-                    <CardTitle>Configuração de Administradores</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                    <p className="text-gray-300">
-                        Esta ferramenta irá criar os usuários administrativos no Supabase Auth.
-                        A senha de cada usuário será sua própria matrícula.
-                    </p>
-
-                    <Button
-                        onClick={handleCreateUsers}
-                        disabled={loading}
-                        className="w-full"
-                    >
-                        {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Criar Usuários
-                    </Button>
-
-                    <div className="space-y-2 mt-4">
-                        {admins.map((admin) => (
-                            <div key={admin.registration} className="flex items-center justify-between p-3 rounded bg-white/5 border border-white/10">
-                                <div>
-                                    <div className="font-bold">{admin.name}</div>
-                                    <div className="text-sm text-gray-400">{admin.email} (Senha: {admin.registration})</div>
-                                    <div className="text-xs text-purple-400 font-mono mt-1">Praça: {admin.site}</div>
-                                </div>
-                                <div>
-                                    {results[admin.registration] ? (
-                                        results[admin.registration].status === 'success' ? (
-                                            <span className="flex items-center text-green-400"><CheckCircle2 className="w-4 h-4 mr-2" /> {results[admin.registration].message}</span>
-                                        ) : (
-                                            <span className="flex items-center text-red-400"><XCircle className="w-4 h-4 mr-2" /> {results[admin.registration].message}</span>
-                                        )
-                                    ) : (
-                                        <span className="text-gray-500">Pendente</span>
-                                    )}
-                                </div>
+        <div className="min-h-screen bg-background font-sans p-8 flex items-center justify-center overflow-x-hidden">
+            <div className="max-w-4xl w-full border-8 border-foreground bg-background p-12 md:p-16 animate-in slide-in-from-bottom-8 duration-700 shadow-[15px_15px_0px_var(--primary)]">
+                <div className="space-y-12">
+                    <div className="border-b-8 border-foreground pb-8 flex justify-between items-end">
+                        <div className="space-y-4">
+                            <div className="bg-foreground text-background inline-block px-4 py-1 text-[10px] font-black uppercase italic tracking-widest translate-x-1">
+                                Critical // System // Setup
                             </div>
-                        ))}
+                            <h1 className="text-4xl md:text-6xl font-black leading-[0.8] uppercase italic tracking-tighter">
+                                Admin_Init
+                            </h1>
+                        </div>
+                        <ShieldCheck className="w-16 h-16 text-primary" />
                     </div>
 
-                </CardContent>
-            </Card>
+                    <div className="space-y-6">
+                        <div className="flex items-start gap-4 p-6 bg-foreground text-background border-4 border-foreground">
+                            <Database className="w-8 h-8 shrink-0 text-primary" />
+                            <p className="font-bold uppercase italic text-sm leading-tight">
+                                Esta ferramenta injeta usuários administrativos no Supabase Auth Cluster.
+                                A chave de acesso [PASS] será gerada via Matrícula_ID.
+                            </p>
+                        </div>
+
+                        <button
+                            onClick={handleCreateUsers}
+                            disabled={loading}
+                            className="w-full border-4 border-foreground bg-primary text-primary-foreground py-6 font-black uppercase italic text-xl hover:bg-secondary shadow-[8px_8px_0px_var(--foreground)] hover:shadow-none hover:translate-x-1 hover:translate-y-1 active:shadow-none active:translate-x-1 active:translate-y-1 transition-all flex items-center justify-center gap-3 disabled:opacity-50"
+                        >
+                            {loading ? <Loader2 className="h-8 w-8 animate-spin" /> : <><Key className="w-6 h-6" /> Deployed_Protocol</>}
+                        </button>
+
+                        <div className="space-y-4 pt-10">
+                            <h3 className="text-sm font-black uppercase italic tracking-widest border-l-4 border-primary pl-4 mb-6">Target_Queue</h3>
+                            {admins.map((admin) => (
+                                <div key={admin.registration} className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between p-6 border-4 border-foreground bg-background hover:bg-foreground/5 transition-colors group">
+                                    <div className="space-y-2">
+                                        <div className="font-black uppercase italic text-lg group-hover:text-primary transition-colors">{admin.name}</div>
+                                        <div className="text-[10px] font-bold uppercase opacity-40 flex items-center gap-2 italic">
+                                            {admin.email} // PASS: {admin.registration}
+                                        </div>
+                                        <div className="bg-foreground text-background inline-block px-2 py-0.5 text-[8px] font-black uppercase italic">
+                                            Praça: {admin.site}
+                                        </div>
+                                    </div>
+                                    <div className="mt-4 sm:mt-0 flex items-center justify-center border-t-2 sm:border-t-0 sm:border-l-2 border-foreground/10 sm:pl-6 pt-4 sm:pt-0">
+                                        {results[admin.registration] ? (
+                                            results[admin.registration].status === 'success' ? (
+                                                <span className="flex items-center font-black text-xs text-primary uppercase italic italic gap-2 transition-all scale-110">
+                                                    <CheckCircle2 className="w-5 h-5" /> {results[admin.registration].message}
+                                                </span>
+                                            ) : (
+                                                <span className="flex items-center font-black text-xs text-secondary uppercase italic gap-2 animate-pulse">
+                                                    <XCircle className="w-5 h-5" /> {results[admin.registration].message}
+                                                </span>
+                                            )
+                                        ) : (
+                                            <span className="font-black text-xs uppercase italic opacity-20">Standby...</span>
+                                        )}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 };
