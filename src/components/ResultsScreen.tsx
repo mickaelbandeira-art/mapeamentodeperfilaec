@@ -1,14 +1,18 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Brain, Target, Users, LineChart, Download, RotateCcw } from "lucide-react";
+import { Brain, Target, Users, LineChart, Download, RotateCcw, Zap, Sparkles, MessageSquare, Briefcase, GraduationCap } from "lucide-react";
 import { WaveBackground } from "./WaveBackground";
 import { DotPattern } from "./DotPattern";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { generateConsultativeInsights } from "@/lib/gemini";
+import { useAuth } from "@/hooks/useAuth";
 
 interface ResultsScreenProps {
   scores: { D: number; I: number; S: number; C: number };
+  mindset: string;
+  vac: string;
   participantData: {
     registration: string;
     name: string;
@@ -57,7 +61,7 @@ const profileDescriptions = {
     motivation: "Segurança, estabilidade e harmonia",
     communication: "Seja gentil, claro e demonstre apreciação"
   },
-  C: {
+  60: {
     name: "Conforme",
     icon: Brain,
     color: "disc-conformity",
@@ -69,28 +73,53 @@ const profileDescriptions = {
   }
 };
 
-export const ResultsScreen = ({ scores, participantData, instructorData, onRestart }: ResultsScreenProps) => {
+const getDiscColorCode = (type: string) => {
+  switch (type) {
+    case 'D': return '#EF4444';
+    case 'I': return '#F59E0B';
+    case 'S': return '#10B981';
+    case 'C': return '#3B82F6';
+    default: return '#8B5CF6';
+  }
+};
+
+export const ResultsScreen = ({ scores, mindset, vac, participantData, instructorData, onRestart }: ResultsScreenProps) => {
+  const [aiInsights, setAiInsights] = useState<string | null>(null);
+  const [isGeneratingAi, setIsGeneratingAi] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
   const total = Object.values(scores).reduce((a, b) => a + b, 0);
   const percentages = {
-    D: Math.round((scores.D / total) * 100),
-    I: Math.round((scores.I / total) * 100),
-    S: Math.round((scores.S / total) * 100),
-    C: Math.round((scores.C / total) * 100)
+    D: Math.round((scores.D / (total || 1)) * 100),
+    I: Math.round((scores.I / (total || 1)) * 100),
+    S: Math.round((scores.S / (total || 1)) * 100),
+    C: Math.round((scores.C / (total || 1)) * 100)
   };
 
-  // Find dominant profile
   const dominant = Object.entries(percentages).sort((a, b) => b[1] - a[1])[0][0] as 'D' | 'I' | 'S' | 'C';
-  const profile = profileDescriptions[dominant];
+  const profile = (profileDescriptions as any)[dominant];
   const Icon = profile.icon;
+  const { user } = useAuth();
 
-  // Find secondary profile
-  const secondary = Object.entries(percentages).sort((a, b) => b[1] - a[1])[1][0] as 'D' | 'I' | 'S' | 'C';
-  const secondaryProfile = profileDescriptions[secondary];
-
-  // Save results to database
   useEffect(() => {
-    const saveResults = async () => {
+    const generateAndSave = async () => {
+      setIsGeneratingAi(true);
       try {
+        const insights = await generateConsultativeInsights({
+          disc: percentages,
+          mindset,
+          vac,
+          userName: participantData.name
+        });
+
+        // Validar se a resposta da IA foi gerada com sucesso
+        if (!insights || insights.startsWith("Erro") || insights.includes("não pôde ser gerado")) {
+          throw new Error(insights || "Falha ao gerar insights da IA.");
+        }
+
+        setAiInsights(insights);
+
+        setIsSaving(true);
         const { error } = await supabase
           .from("test_results")
           .insert({
@@ -104,138 +133,195 @@ export const ResultsScreen = ({ scores, participantData, instructorData, onResta
             score_s: scores.S,
             score_c: scores.C,
             dominant_profile: dominant,
-            class_id: participantData.class_id,
+            mindset_tipo: mindset,
+            vac_dominante: vac,
+            insights_consultivos: insights,
+            class_id: participantData.class_id || null,
             instructor_name: instructorData.instructorName,
             instructor_registration: instructorData.instructorRegistration,
             instructor_email: instructorData.instructorEmail,
             class_name: instructorData.className,
+            user_id: user?.id || null, // Vínculo com user_id para RLS
           });
 
         if (error) throw error;
-
-        toast({
-          title: "Resultados salvos!",
-          description: "Seus resultados foram salvos com sucesso no sistema.",
-        });
       } catch (error: any) {
-        console.error("Error saving results:", error);
+        console.error("Error in results process:", error);
         toast({
-          title: "Erro ao salvar resultados",
-          description: "Não foi possível salvar seus resultados. Por favor, entre em contato com o suporte.",
+          title: "Aviso",
+          description: error.message || "Os resultados foram gerados, mas pode ter ocorrido uma falha ao salvá-los permanentemente.",
           variant: "destructive",
         });
+      } finally {
+        setIsGeneratingAi(false);
+        setIsSaving(false);
       }
     };
 
-    saveResults();
-  }, [scores, participantData, dominant]);
+    generateAndSave();
+  }, [scores, participantData, dominant, user?.id]);
 
   return (
-    <div className="min-h-screen p-4 py-20 relative overflow-hidden">
+    <div className="min-h-screen p-4 py-12 relative overflow-hidden bg-[#0A0A0B]">
       <WaveBackground />
-      <DotPattern position="top-right" />
-      <DotPattern position="bottom-left" />
 
-      <div className="max-w-6xl mx-auto space-y-6 relative z-10">
-        <Card className="p-6 sm:p-8 md:p-10 glass-card shadow-2xl animate-fade-in text-center">
-          <div
-            className="inline-flex p-5 rounded-full mb-6 animate-float shadow-lg glow-purple"
-            style={{ backgroundColor: `hsl(var(--${profile.color}))` }}
-          >
-            <Icon className="w-12 h-12 md:w-16 md:h-16 text-white" />
-          </div>
+      <div className="max-w-6xl mx-auto space-y-8 relative z-10 transition-all duration-700">
+        {/* Top Header Card */}
+        <Card className="p-8 sm:p-12 glass-card border-white/10 shadow-2xl relative overflow-hidden animate-fade-in">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-purple-600 via-fuchsia-500 to-blue-500" />
 
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 text-gradient-hero">
-            Seu Perfil Principal: {profile.name}
-          </h1>
-
-          <p className="text-lg sm:text-xl text-gray-300 max-w-3xl mx-auto mb-8">
-            {profile.description}
-          </p>
-
-          {/* Chart */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
-            {Object.entries(percentages).map(([type, percentage]) => {
-              const typeProfile = profileDescriptions[type as 'D' | 'I' | 'S' | 'C'];
-              const TypeIcon = typeProfile.icon;
-              return (
-                <div key={type} className="space-y-2">
-                  <div className="flex items-center justify-center gap-2">
-                    <TypeIcon className="w-5 h-5" style={{ color: `hsl(var(--${typeProfile.color}))` }} />
-                    <span className="font-bold text-lg">{percentage}%</span>
-                  </div>
-                  <div className="h-32 bg-gray-800 rounded-lg overflow-hidden relative">
-                    <div
-                      className="absolute bottom-0 w-full transition-all duration-1000 ease-out"
-                      style={{
-                        backgroundColor: `hsl(var(--${typeProfile.color}))`,
-                        height: `${percentage}%`
-                      }}
-                    />
-                  </div>
-                  <span className="text-sm text-gray-400">{typeProfile.name}</span>
-                </div>
-              );
-            })}
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-6 text-left">
-            <Card className="p-6 glass-card-hover">
-              <h3 className="text-xl font-bold mb-4 text-gradient-primary">💪 Seus Pontos Fortes</h3>
-              <ul className="space-y-2">
-                {profile.strengths.map((strength, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-green-400">✓</span>
-                    <span>{strength}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-
-            <Card className="p-6 glass-card-hover">
-              <h3 className="text-xl font-bold mb-4 text-gradient-primary">🎯 Áreas de Desenvolvimento</h3>
-              <ul className="space-y-2">
-                {profile.improvements.map((improvement, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <span className="text-orange-400">→</span>
-                    <span>{improvement}</span>
-                  </li>
-                ))}
-              </ul>
-            </Card>
-
-            <Card className="p-6 glass-card-hover">
-              <h3 className="text-xl font-bold mb-4 text-gradient-primary">🔥 O Que Te Motiva</h3>
-              <p className="text-gray-300">{profile.motivation}</p>
-            </Card>
-
-            <Card className="p-6 glass-card-hover">
-              <h3 className="text-xl font-bold mb-4 text-gradient-primary">💬 Como Se Comunicar Com Você</h3>
-              <p className="text-gray-300">{profile.communication}</p>
-            </Card>
-          </div>
-
-          {percentages[secondary] >= 20 && (
-            <Card className="p-6 glass-card-hover mt-6">
-              <h3 className="text-xl font-bold mb-3 text-gradient-primary">
-                ➕ Perfil Secundário: {secondaryProfile.name} ({percentages[secondary]}%)
-              </h3>
-              <p className="text-gray-300">{secondaryProfile.description}</p>
-            </Card>
-          )}
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
-            <Button
-              onClick={onRestart}
-              size="lg"
-              variant="outline"
-              className="glass-card-hover"
+          <div className="flex flex-col md:flex-row gap-8 items-center md:items-start text-center md:text-left">
+            <div
+              className="w-24 h-24 sm:w-32 sm:h-32 rounded-3xl flex items-center justify-center relative group shrink-0"
+              style={{ background: `linear-gradient(135deg, ${getDiscColorCode(dominant)} 0%, #000 100%)` }}
             >
-              <RotateCcw className="w-5 h-5 mr-2" />
-              Refazer Teste
-            </Button>
+              <div className="absolute inset-0 rounded-3xl blur-xl opacity-50 bg-current transition-opacity group-hover:opacity-75" />
+              <Icon className="w-12 h-12 sm:w-16 sm:h-16 text-white relative z-10" />
+            </div>
+
+            <div className="flex-1 space-y-4">
+              <div className="space-y-1">
+                <span className="text-purple-400 font-bold uppercase tracking-[0.2em] text-xs">Mapeamento 360º Completo</span>
+                <h1 className="text-3xl sm:text-5xl font-black text-white leading-tight">
+                  {participantData.name.split(' ')[0]}, seu perfil é <span style={{ color: getDiscColorCode(dominant) }}>{profile.name}</span>
+                </h1>
+              </div>
+              <p className="text-gray-400 text-lg sm:text-xl max-w-3xl leading-relaxed">
+                {profile.description}
+              </p>
+            </div>
           </div>
         </Card>
+
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Left Column - Core Metrics */}
+          <div className="lg:col-span-1 space-y-8">
+            {/* DISC Chart Card */}
+            <Card className="p-6 glass-card border-white/10">
+              <h3 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                <Zap className="w-5 h-5 text-yellow-400" /> Intensidade DISC
+              </h3>
+              <div className="space-y-6">
+                {Object.entries(percentages).map(([type, percentage]) => (
+                  <div key={type} className="space-y-2">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-gray-300 font-medium">
+                        {(profileDescriptions as any)[type]?.name || type}
+                      </span>
+                      <span className="font-bold text-white" style={{ color: getDiscColorCode(type) }}>{percentage}%</span>
+                    </div>
+                    <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                      <div
+                        className="h-full rounded-full transition-all duration-1000 ease-out"
+                        style={{
+                          width: `${percentage}%`,
+                          backgroundColor: getDiscColorCode(type)
+                        }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+
+            {/* Mindset & VAC Card */}
+            <div className="grid grid-cols-1 gap-6">
+              <Card className="p-6 glass-card border-white/10 bg-gradient-to-br from-white/5 to-transparent">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-2xl bg-fuchsia-600/20 text-fuchsia-400">
+                    <Sparkles className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Mindset Predominante</h4>
+                    <p className="text-xl font-bold text-white">{mindset}</p>
+                  </div>
+                </div>
+              </Card>
+
+              <Card className="p-6 glass-card border-white/10 bg-gradient-to-br from-white/5 to-transparent">
+                <div className="flex items-center gap-4">
+                  <div className="p-3 rounded-2xl bg-blue-600/20 text-blue-400">
+                    <MessageSquare className="w-6 h-6" />
+                  </div>
+                  <div>
+                    <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Canal VAC (Comunicação)</h4>
+                    <p className="text-xl font-bold text-white">{vac}</p>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </div>
+
+          {/* Right Column - AI Insights */}
+          <div className="lg:col-span-2 space-y-6">
+            <Card className="p-8 glass-card border-white/10 min-h-[400px] relative overflow-hidden flex flex-col">
+              <div className="flex items-center justify-between mb-8">
+                <h3 className="text-2xl font-bold text-white flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-purple-600/20">
+                    <Brain className="w-6 h-6 text-purple-400" />
+                  </div>
+                  Insights da IA Consultiva AeC
+                </h3>
+              </div>
+
+              {isGeneratingAi ? (
+                <div className="flex-1 flex flex-col items-center justify-center space-y-4">
+                  <div className="w-16 h-16 border-4 border-purple-600/30 border-t-purple-600 rounded-full animate-spin" />
+                  <div className="text-center">
+                    <p className="text-white font-bold text-lg animate-pulse">Cruzando dados de DISC, Mindset e VAC...</p>
+                    <p className="text-gray-400 text-sm">Gerando seu plano de desenvolvimento personalizado</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex-1 text-gray-300 prose prose-invert max-w-none prose-headings:text-white prose-p:leading-relaxed overflow-auto max-h-[600px] pr-4 custom-scrollbar">
+                  {aiInsights ? (
+                    <div className="whitespace-pre-wrap leading-relaxed animate-in fade-in slide-in-from-bottom-4 duration-1000">
+                      {aiInsights.split('\n').map((line, i) => {
+                        if (line.startsWith('#')) return <h3 key={i} className="text-xl font-bold text-white mt-6 mb-3">{line.replace(/^#+\s*/, '')}</h3>;
+                        if (line.startsWith('-')) return <li key={i} className="ml-4 mb-2 list-none flex gap-2"><span className="text-purple-400">•</span> {line.replace(/^-/, '')}</li>;
+                        return <p key={i} className="mb-4">{line}</p>;
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-center text-gray-500 mt-20 italic">Aguardando geração dos insights...</p>
+                  )}
+                </div>
+              )}
+            </Card>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-end items-center">
+              <div className="text-sm text-gray-500 italic mr-auto mb-4 sm:mb-0">
+                Mapeamento interpretado por Inteligência Artificial Consultiva.
+              </div>
+              <Button
+                variant="outline"
+                onClick={onRestart}
+                className="bg-transparent border-white/10 hover:bg-white/5 text-gray-300 hover:text-white"
+              >
+                <RotateCcw className="w-4 h-4 mr-2" />
+                Refazer Teste
+              </Button>
+              <Button
+                onClick={() => window.print()}
+                className="bg-gradient-to-r from-purple-600 to-blue-600 hover:opacity-90 text-white font-bold"
+              >
+                <Download className="w-4 h-4 mr-2" />
+                Salvar PDF
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {/* Footer Info */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500 mt-12 border-t border-white/5 pt-6">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1"><GraduationCap className="w-3 h-3" /> Turma: {instructorData.className}</span>
+            <span className="flex items-center gap-1"><Users className="w-3 h-3" /> Instrutor: {instructorData.instructorName}</span>
+          </div>
+          <div className="md:text-right">
+            <span>© 2024 AeC - Perfil 360º Consultivo Inteligente</span>
+          </div>
+        </div>
       </div>
     </div>
   );

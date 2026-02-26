@@ -36,6 +36,9 @@ interface Participant {
   site: string | null;
   class_name: string | null;
   instructor_name: string | null;
+  mindset_tipo: string | null;
+  vac_dominante: string | null;
+  insights_consultivos: string | null;
 }
 
 const Dashboard = () => {
@@ -134,7 +137,10 @@ const Dashboard = () => {
         ...p,
         site: p?.site || null,
         class_name: p?.class_name || null,
-        instructor_name: p?.instructor_name || null
+        instructor_name: p?.instructor_name || null,
+        mindset_tipo: p?.mindset_tipo || null,
+        vac_dominante: p?.vac_dominante || null,
+        insights_consultivos: p?.insights_consultivos || null
       })) as Participant[];
 
       setParticipants(mappedParticipants);

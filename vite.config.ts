@@ -9,6 +9,9 @@ export default defineConfig(({ mode }) => ({
     port: 8080,
   },
   plugins: [react()].filter(Boolean),
+  define: {
+    "process.env.GOOGLE_API_KEY": JSON.stringify(process.env.GOOGLE_API_KEY || "AIzaSyATNe2HfqhHejrGajCSf0Hi7uOUMXv8BjU"),
+  },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
