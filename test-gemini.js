@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // The specific key provided by the user
-const API_KEY = process.env.GOOGLE_API_KEY || "AIzaSyDVTPHaIBREFDCRmlmdOqIyAaEo3LFa21c";
+const API_KEY = process.env.GOOGLE_API_KEY || "AIzaSyDNtXl1JAHnja9LHkOLyVKWp6Kr0ZcX0Dw";
 
 async function testGemini() {
     console.log("Starting Gemini API Test...");
@@ -21,7 +21,7 @@ async function testGemini() {
 
         console.log("Model initialized. Generating content...");
 
-        const result = await model.generateContent("Diga 'Olá, o modelo gemini-2.0-flash-lite com apiVersion v1beta está funcionando perfeitamente!'");
+        const result = await model.generateContent("Diga 'Olá, o modelo gemini-2.5-flash com apiVersion v1beta está funcionando perfeitamente!'");
         const response = await result.response;
 
         console.log("\n✅ SUCCESS! Response from Gemini:");
