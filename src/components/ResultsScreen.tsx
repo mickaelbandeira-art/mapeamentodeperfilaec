@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { generateConsultativeInsights } from "@/lib/gemini";
 import { useAuth } from "@/hooks/useAuth";
+import { cn } from "@/lib/utils";
 
 interface ResultsScreenProps {
   scores: { D: number; I: number; S: number; C: number };
@@ -145,46 +146,46 @@ export const ResultsScreen = ({ scores, mindset, vac, participantData, instructo
   }, [scores, participantData, dominant, user?.id]);
 
   return (
-    <div className="min-h-screen p-4 py-8 bg-background font-sans">
-      <div className="max-w-7xl mx-auto space-y-8 animate-fade-in relative z-10">
+    <div className="h-[100dvh] overflow-hidden p-4 bg-background font-sans flex flex-col">
+      <div className="max-w-7xl mx-auto w-full flex-1 flex flex-col min-h-0 animate-fade-in relative z-10 gap-6">
 
-        {/* Massive Hero Header */}
-        <div className="border-b-8 border-foreground pb-8 flex flex-col md:flex-row justify-between items-end gap-8 overflow-hidden">
-          <div className="space-y-4">
-            <div className="bg-primary text-primary-foreground inline-block px-4 py-1 text-xs font-black uppercase italic tracking-widest translate-x-1">
+        {/* Massive Hero Header - Compact */}
+        <div className="border-b-4 border-foreground pb-4 flex flex-col md:flex-row justify-between items-end gap-4 shrink-0">
+          <div className="space-y-2">
+            <div className="bg-primary text-primary-foreground inline-block px-3 py-0.5 text-[10px] font-black uppercase italic tracking-widest translate-x-1">
               Assessment // Result // Final
             </div>
-            <h1 className="text-[12vw] md:text-[8vw] font-black leading-[0.8] uppercase italic italic tracking-tighter">
+            <h1 className="text-[10vw] md:text-[5vw] font-black leading-[0.8] uppercase italic tracking-tighter">
               {profile.name}
             </h1>
-            <p className="text-2xl font-bold uppercase text-muted-foreground leading-none">
-              Perfis Dominantes Detectados para {participantData.name.split(' ')[0]}
+            <p className="text-xl font-bold uppercase text-muted-foreground leading-none">
+              Detectado para {participantData.name.split(' ')[0]}
             </p>
           </div>
           <div className="flex flex-col items-end">
-            <div className="text-8xl font-black italic text-primary leading-none">
+            <div className="text-6xl font-black italic text-primary leading-none">
               {percentages[dominant]}%
             </div>
-            <div className="font-black text-xs uppercase opacity-30">Dominance Level</div>
+            <div className="font-black text-[8px] uppercase opacity-30 tracking-widest">Dominance Level</div>
           </div>
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-8">
-          {/* Main Visual Data */}
-          <div className="lg:col-span-4 space-y-8">
-            <Card className="p-8 border-4 border-foreground bg-background brutal-card shadow-[10px_10px_0px_var(--secondary)]">
-              <h3 className="text-2xl font-black uppercase italic mb-8 border-b-4 border-foreground pb-2 flex items-center justify-between">
+        <div className="flex-1 grid lg:grid-cols-12 gap-6 min-h-0 pb-4">
+          {/* Main Visual Data - Sidebar with internal scroll if needed */}
+          <div className="lg:col-span-4 flex flex-col gap-6 min-h-0 overflow-y-auto pr-2 custom-scrollbar">
+            <Card className="p-5 border-4 border-foreground bg-background brutal-card shadow-[8px_8px_0px_var(--secondary)] shrink-0">
+              <h3 className="text-lg font-black uppercase italic mb-4 border-b-2 border-foreground pb-2 flex items-center justify-between">
                 DISC Matrix
-                <Zap className="w-6 h-6 text-primary fill-primary" />
+                <Zap className="w-5 h-5 text-primary fill-primary" />
               </h3>
-              <div className="space-y-8">
+              <div className="space-y-4">
                 {Object.entries(percentages).map(([type, percentage]) => (
-                  <div key={type} className="space-y-2">
-                    <div className="flex justify-between items-end font-black uppercase text-xs">
+                  <div key={type} className="space-y-1">
+                    <div className="flex justify-between items-end font-black uppercase text-[9px]">
                       <span>{(profileDescriptions as any)[type]?.name}</span>
-                      <span className="text-xl italic">{percentage}%</span>
+                      <span className="text-base italic">{percentage}%</span>
                     </div>
-                    <div className="h-6 border-4 border-foreground bg-background overflow-hidden">
+                    <div className="h-3 border-2 border-foreground bg-background overflow-hidden font-black">
                       <div
                         className="h-full transition-all duration-1000 ease-out"
                         style={{
@@ -198,77 +199,108 @@ export const ResultsScreen = ({ scores, mindset, vac, participantData, instructo
               </div>
             </Card>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="border-4 border-foreground p-6 bg-primary text-primary-foreground rotate-[-2deg] brutal-card">
-                <Sparkles className="w-8 h-8 mb-4" />
-                <h4 className="text-[10px] font-black uppercase tracking-widest opacity-70">Mindset</h4>
-                <p className="text-xl font-black uppercase italic leading-none">{mindset}</p>
+            <div className="grid grid-cols-2 lg:grid-cols-1 gap-4 shrink-0">
+              <div className="group relative border-4 border-foreground p-4 bg-primary text-primary-foreground brutal-card overflow-hidden">
+                <div className="absolute top-0 right-0 text-4xl font-black italic opacity-10 pointer-events-none select-none uppercase">Mindset</div>
+                <Sparkles className="w-5 h-5 mb-2 relative z-10" />
+                <h4 className="text-[8px] font-black uppercase tracking-widest opacity-70 mb-1">Mentalidade</h4>
+                <p className="text-xl font-black uppercase italic leading-none relative z-10">{mindset}</p>
               </div>
-              <div className="border-4 border-foreground p-6 bg-secondary text-secondary-foreground rotate-[2deg] brutal-card">
-                <MessageSquare className="w-8 h-8 mb-4" />
-                <h4 className="text-[10px] font-black uppercase tracking-widest opacity-70">Canal VAC</h4>
-                <p className="text-xl font-black uppercase italic leading-none">{vac}</p>
+
+              <div className="group relative border-4 border-foreground p-4 bg-secondary text-secondary-foreground brutal-card overflow-hidden">
+                <div className="absolute top-0 right-0 text-4xl font-black italic opacity-10 pointer-events-none select-none uppercase">VAC</div>
+                <MessageSquare className="w-5 h-5 mb-2 relative z-10" />
+                <h4 className="text-[8px] font-black uppercase tracking-widest opacity-70 mb-1">Canal VAC</h4>
+                <p className="text-xl font-black uppercase italic leading-none relative z-10">{vac}</p>
               </div>
             </div>
 
-            <div className="border-4 border-foreground p-8 bg-foreground text-background">
-              <Icon className="w-12 h-12 mb-6" />
-              <p className="font-bold text-sm leading-tight uppercase">
-                {profile.description}
-              </p>
+            <div className="space-y-2 flex-1 min-h-0 flex flex-col">
+              <div className="bg-foreground text-background p-2 font-black text-[9px] uppercase tracking-widest flex justify-between shrink-0">
+                <span>Matriz de Perfil</span>
+                <span>Details // 360</span>
+              </div>
+              <div className="grid gap-2 overflow-y-auto flex-1 min-h-0 pr-1">
+                {Object.entries(profileDescriptions).map(([key, desc]) => {
+                  const isDominant = key === dominant;
+                  return (
+                    <div
+                      key={key}
+                      className={cn(
+                        "border-4 border-foreground p-3 transition-all duration-300",
+                        isDominant ? "bg-foreground text-background shadow-[5px_5px_0px_var(--primary)]" : "bg-background text-foreground opacity-60 hover:opacity-100"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className={cn("p-1.5 border-2", isDominant ? "border-background" : "border-foreground")}>
+                          <desc.icon className="w-4 h-4" />
+                        </div>
+                        <div className="min-w-0">
+                          <h4 className="font-black uppercase italic text-sm truncate">{desc.name}</h4>
+                          <p className="text-[8px] font-bold leading-tight uppercase line-clamp-2 mt-0.5">
+                            {desc.description}
+                          </p>
+                        </div>
+                        <div className="ml-auto text-xl font-black italic shrink-0">
+                          {percentages[key as keyof typeof percentages]}%
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
 
-          {/* AI Insights & Actions */}
-          <div className="lg:col-span-8 flex flex-col gap-8">
-            <div className="flex-1 border-4 border-foreground bg-background p-8 md:p-12 relative overflow-hidden flex flex-col shadow-[15px_15px_0px_var(--foreground)]">
+          {/* AI Insights - Contained and scrollable */}
+          <div className="lg:col-span-8 flex flex-col gap-6 min-h-0">
+            <div className="flex-1 border-4 border-foreground bg-background p-6 md:p-8 relative overflow-hidden flex flex-col shadow-[10px_10px_0px_var(--foreground)] min-h-0">
               {/* Background Label */}
-              <div className="absolute top-0 right-0 text-[10vw] font-black italic opacity-5 pointer-events-none select-none -mr-10 -mt-10 uppercase">
+              <div className="absolute top-0 right-0 text-[8vw] font-black italic opacity-5 pointer-events-none select-none -mr-8 -mt-8 uppercase">
                 Insights
               </div>
 
-              <div className="relative z-10 flex flex-col h-full">
-                <div className="flex items-center gap-4 mb-12">
-                  <div className="w-16 h-16 bg-foreground text-background flex items-center justify-center border-4 border-foreground shrink-0">
-                    <Brain className="w-10 h-10" />
+              <div className="relative z-10 flex flex-col h-full min-h-0">
+                <div className="flex items-center gap-4 mb-8 shrink-0">
+                  <div className="w-12 h-12 bg-foreground text-background flex items-center justify-center border-4 border-foreground shrink-0">
+                    <Brain className="w-8 h-8" />
                   </div>
-                  <h3 className="text-4xl font-black uppercase italic italic leading-none tracking-tighter">
+                  <h3 className="text-3xl font-black uppercase italic leading-none tracking-tighter">
                     IA Consultiva<br />
                     <span className="text-primary">Estratégica</span>
                   </h3>
                 </div>
 
                 {isGeneratingAi ? (
-                  <div className="flex-1 flex flex-col items-center justify-center space-y-6">
-                    <Loader2 className="w-16 h-16 animate-spin text-primary" />
+                  <div className="flex-1 flex flex-col items-center justify-center space-y-4">
+                    <Loader2 className="w-12 h-12 animate-spin text-primary" />
                     <div className="text-center">
-                      <p className="text-2xl font-black uppercase italic animate-pulse">Cruzando Dados...</p>
-                      <p className="text-xs font-bold text-muted-foreground uppercase">Analisando DISC + Mindset + VAC</p>
+                      <p className="text-xl font-black uppercase italic animate-pulse">Cruzando Dados...</p>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex-1 overflow-auto pr-4 custom-scrollbar">
+                  <div className="flex-1 overflow-y-auto pr-4 custom-scrollbar min-h-0">
                     {aiInsights && aiInsights.length > 0 ? (
-                      <div className="space-y-6 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                      <div className="space-y-4 animate-in fade-in slide-in-from-bottom-4 duration-1000">
                         {String(aiInsights).split('\n').map((line, i) => {
                           if (line.trim() === '') return null;
                           if (line.startsWith('#')) {
-                            return <h3 key={i} className="text-2xl font-black uppercase italic border-l-8 border-primary pl-4 mt-8 mb-4">{line.replace(/^#+\s*/, '')}</h3>;
+                            return <h3 key={i} className="text-xl font-black uppercase italic border-l-4 border-primary pl-3 mt-4 mb-2">{line.replace(/^#+\s*/, '')}</h3>;
                           }
                           if (line.startsWith('-')) {
                             return (
-                              <div key={i} className="flex gap-4 items-start group">
-                                <ArrowRight className="w-5 h-5 mt-1 shrink-0 text-primary group-hover:translate-x-1 transition-transform" />
-                                <p className="font-bold text-sm md:text-base uppercase leading-tight italic">{line.replace(/^-/, '')}</p>
+                              <div key={i} className="flex gap-3 items-start group">
+                                <ArrowRight className="w-4 h-4 mt-0.5 shrink-0 text-primary group-hover:translate-x-1 transition-transform" />
+                                <p className="font-bold text-xs md:text-sm uppercase leading-tight italic">{line.replace(/^-/, '')}</p>
                               </div>
                             );
                           }
-                          return <p key={i} className="text-sm font-medium leading-relaxed opacity-70">{line}</p>;
+                          return <p key={i} className="text-xs font-medium leading-relaxed opacity-70">{line}</p>;
                         })}
                       </div>
                     ) : (
                       <div className="h-full flex items-center justify-center opacity-20">
-                        <p className="text-6xl font-black uppercase italic">No Data</p>
+                        <p className="text-4xl font-black uppercase italic">No Data</p>
                       </div>
                     )}
                   </div>
@@ -276,22 +308,22 @@ export const ResultsScreen = ({ scores, mindset, vac, participantData, instructo
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center">
+            <div className="flex flex-col sm:flex-row gap-4 shrink-0">
               <button
                 onClick={onRestart}
-                className="flex-1 border-4 border-foreground bg-background p-6 font-black uppercase italic hover:bg-secondary hover:text-secondary-foreground transition-all shadow-[8px_8px_0px_var(--foreground)] active:shadow-none active:translate-x-1 active:translate-y-1"
+                className="flex-1 border-4 border-foreground bg-background p-4 font-black uppercase italic hover:bg-secondary hover:text-secondary-foreground transition-all shadow-[5px_5px_0px_var(--foreground)] active:shadow-none active:translate-x-1 active:translate-y-1 text-sm"
               >
                 <div className="flex items-center justify-center gap-2">
-                  <RotateCcw className="w-5 h-5" />
+                  <RotateCcw className="w-4 h-4" />
                   Reiniciar
                 </div>
               </button>
               <button
                 onClick={() => window.print()}
-                className="flex-[2] border-4 border-foreground bg-foreground text-background p-6 font-black uppercase italic hover:bg-primary hover:text-primary-foreground transition-all shadow-[8px_8px_0px_var(--secondary)] active:shadow-none active:translate-x-1 active:translate-y-1"
+                className="flex-[2] border-4 border-foreground bg-foreground text-background p-4 font-black uppercase italic hover:bg-primary hover:text-primary-foreground transition-all shadow-[5px_5px_0px_var(--secondary)] active:shadow-none active:translate-x-1 active:translate-y-1 text-sm"
               >
                 <div className="flex items-center justify-center gap-2">
-                  <Download className="w-5 h-5" />
+                  <Download className="w-4 h-4" />
                   Exportar Resultado
                 </div>
               </button>
@@ -299,14 +331,14 @@ export const ResultsScreen = ({ scores, mindset, vac, participantData, instructo
           </div>
         </div>
 
-        {/* System Meta */}
-        <div className="pt-8 border-t-8 border-foreground flex flex-col md:flex-row justify-between items-center gap-4 text-[10px] font-black uppercase opacity-30 italic">
-          <div className="flex gap-6">
+        {/* System Meta - Fixed footer */}
+        <div className="pt-4 border-t-4 border-foreground flex justify-between items-center gap-4 text-[8px] font-black uppercase opacity-30 italic shrink-0 pb-2">
+          <div className="flex gap-4">
             <span>Turma: {instructorData.className}</span>
             <span>Instrutor: {instructorData.instructorName}</span>
           </div>
-          <div className="bg-foreground text-background px-2 py-1">
-            AeC // ASSESSMENT // v2.0 // © 2024
+          <div className="bg-foreground text-background px-2 py-0.5">
+            AeC // ASSESSMENT // v2.0
           </div>
         </div>
       </div>

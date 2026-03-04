@@ -4,6 +4,8 @@ import { RegistrationScreen } from "@/components/RegistrationScreen";
 import { QuizScreen } from "@/components/QuizScreen";
 import { ResultsScreen } from "@/components/ResultsScreen";
 import { InstructorSetup } from "@/components/InstructorSetup";
+import { TestInfoModal, TestType } from "@/components/TestInfoModal";
+import { cn } from "@/lib/utils";
 
 type Screen = 'landing' | 'instructor_setup' | 'registration' | 'quiz_disc' | 'quiz_mindset' | 'quiz_vac' | 'results';
 
@@ -25,6 +27,7 @@ interface InstructorData {
 
 const Index = () => {
   const [currentScreen, setCurrentScreen] = useState<Screen>('landing');
+  const [infoModal, setInfoModal] = useState<TestType | null>(null);
   const [scores, setScores] = useState({ D: 0, I: 0, S: 0, C: 0 });
   const [mindsetResult, setMindsetResult] = useState<string>("");
   const [vacResult, setVacResult] = useState<string>("");
@@ -39,18 +42,16 @@ const Index = () => {
 
   const handleInstructorComplete = (data: InstructorData) => {
     setInstructorData(data);
-    // After instructor setup, if participantData exists, update it with the class_id
-    // and then proceed to the quiz.
     if (participantData) {
       setParticipantData({ ...participantData, class_id: data.className });
     }
-    setCurrentScreen('quiz_disc');
+    setInfoModal('DISC');
   };
 
   const handleRegistrationComplete = (data: { registration: string; name: string; email: string; cpf: string; site: string; class_id?: string }) => {
     setParticipantData(data);
     if (userType === 'colaborador' || data.class_id) {
-      setCurrentScreen('quiz_disc');
+      setInfoModal('DISC');
     } else {
       setCurrentScreen('instructor_setup');
     }
@@ -58,23 +59,44 @@ const Index = () => {
 
   const handleDiscComplete = (finalScores: { D: number; I: number; S: number; C: number }) => {
     setScores(finalScores);
-    setCurrentScreen('quiz_mindset');
+    setInfoModal('Mindset');
   };
 
   const handleMindsetComplete = (result: string) => {
     setMindsetResult(result);
-    setCurrentScreen('quiz_vac');
+    setInfoModal('VAC');
   };
 
   const handleVacComplete = (result: string) => {
     setVacResult(result);
-    setCurrentScreen('results');
+    setInfoModal('AI');
+  };
+
+  const handleConfirmModal = () => {
+    const nextModal = infoModal;
+    setInfoModal(null);
+
+    switch (nextModal) {
+      case 'DISC':
+        setCurrentScreen('quiz_disc');
+        break;
+      case 'Mindset':
+        setCurrentScreen('quiz_mindset');
+        break;
+      case 'VAC':
+        setCurrentScreen('quiz_vac');
+        break;
+      case 'AI':
+        setCurrentScreen('results');
+        break;
+    }
   };
 
   const handleRestart = () => {
     setScores({ D: 0, I: 0, S: 0, C: 0 });
     setUserType(null);
     setCurrentScreen('landing');
+    setInfoModal(null);
   };
 
   const handleBack = () => {
@@ -88,7 +110,14 @@ const Index = () => {
   };
 
   return (
-    <div className="pt-16">
+    <div className={cn(currentScreen !== 'results' && "pt-16")}>
+      <TestInfoModal
+        isOpen={!!infoModal}
+        type={infoModal || 'DISC'}
+        onClose={() => setInfoModal(null)}
+        onConfirm={handleConfirmModal}
+      />
+
       {currentScreen === 'landing' && <LandingScreen onStart={handleStart} />}
       {currentScreen === 'instructor_setup' && <InstructorSetup onComplete={handleInstructorComplete} onBack={handleBack} />}
       {currentScreen === 'registration' && (

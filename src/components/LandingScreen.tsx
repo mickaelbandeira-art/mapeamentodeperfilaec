@@ -33,8 +33,8 @@ export const LandingScreen = ({ onStart }: LandingScreenProps) => {
               <span className="text-primary italic">360º</span>
             </h1>
             <p className="text-xl md:text-2xl font-bold max-w-xl text-muted-foreground pt-8 border-t-2 border-foreground/10">
-              DISC + MINDSET + VAC + <span className="underline decoration-primary decoration-4 underline-offset-4">AI CONSULTIVA</span>.
-              UMA JORNADA RADICAL DE AUTOCONHECIMENTO.
+              DISC + MINDSET + VAC + <span className="underline decoration-primary decoration-4 underline-offset-4">AI CONSULTIVA</span>.<br />
+              JORNADA DE AUTOCONHECIMENTO.
             </p>
           </div>
         </div>
@@ -95,7 +95,7 @@ export const LandingScreen = ({ onStart }: LandingScreenProps) => {
       <div className="absolute bottom-0 left-0 w-full bg-primary py-2 flex overflow-hidden whitespace-nowrap border-t-4 border-foreground">
         <div className="flex animate-marquee gap-8 font-black text-primary-foreground uppercase text-xs">
           {[...Array(10)].map((_, i) => (
-            <span key={i}>Mapeamento de Perfil 360º AeC // Transformção Radical // AI Driven // DISC // Mindset // VAC // </span>
+            <span key={i}>Mapeamento de Perfil 360º AeC // Transformação // AI Driven // DISC // Mindset // VAC // </span>
           ))}
         </div>
       </div>
