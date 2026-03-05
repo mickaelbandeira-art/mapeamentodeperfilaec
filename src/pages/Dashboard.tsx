@@ -42,6 +42,18 @@ interface Participant {
 const Dashboard = () => {
   const { signOut, profile, userRole } = useAuth();
   const isGlobalAdmin = userRole === 'admin';
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState("");
+  const [filterCargo, setFilterCargo] = useState("all");
+  const [filterStatus, setFilterStatus] = useState("all");
+  const [filterTurma, setFilterTurma] = useState("all");
+  const [filterInstructor, setFilterInstructor] = useState("all");
+  const [cargos, setCargos] = useState<string[]>([]);
+  const [turmas, setTurmas] = useState<string[]>([]);
+  const [instructors, setInstructors] = useState<{ name: string; email: string }[]>([]);
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
 
   useEffect(() => {
     fetchDashboardData();
