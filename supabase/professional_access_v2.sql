@@ -65,14 +65,16 @@ BEGIN
     tr.score_s, 
     tr.score_c,
     p.site, 
-    tc.name AS class_name,
-    tc.instructor_name,
+    COALESCE(tc.name, tr.class_name) AS class_name,
+    COALESCE(tc.instructor_name, tr.instructor_name) AS instructor_name,
     tr.mindset_tipo,
     tr.vac_dominante,
     tr.insights_consultivos
   FROM public.participants p
-  LEFT JOIN public.training_classes tc ON p.class_id = tc.id
+  -- Link via registration for test results
   LEFT JOIN public.test_results tr ON p.registration = tr.registration
+  -- Link via instructor email as a fallback since class_id is missing in participants
+  LEFT JOIN public.training_classes tc ON (tr.class_name = tc.name OR p.instructor_name = tc.instructor_name)
   WHERE
     -- A) ISOLAMENTO POR PRAÇA
     (v_is_admin OR p.site = ANY(v_allowed_sites))
@@ -83,6 +85,7 @@ BEGIN
       OR v_is_manager 
       OR tc.created_by = auth.uid() 
       OR tc.instructor_email = v_user_email
+      OR tr.instructor_email = v_user_email
       OR p.email = v_user_email
     )
 
@@ -99,8 +102,8 @@ BEGIN
            ELSE true
          END)
     AND (filter_cargo IS NULL OR p.cargo ILIKE filter_cargo)
-    AND (filter_turma IS NULL OR tc.name ILIKE '%' || filter_turma || '%')
-    AND (filter_instructor_email IS NULL OR tc.instructor_email = filter_instructor_email)
+    AND (filter_turma IS NULL OR COALESCE(tc.name, tr.class_name) ILIKE '%' || filter_turma || '%')
+    AND (filter_instructor_email IS NULL OR COALESCE(tc.instructor_email, tr.instructor_email) = filter_instructor_email)
     AND (filter_site IS NULL OR p.site = filter_site)
   ORDER BY p.created_at DESC;
 END;
