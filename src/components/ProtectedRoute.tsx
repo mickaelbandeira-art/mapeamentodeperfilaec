@@ -44,7 +44,8 @@ export const ProtectedRoute = ({ children, allowedRoles }: ProtectedRouteProps) 
     );
   }
 
-  const hasAccessByRole = isGlobalAdmin || (allowedRoles && userRole && allowedRoles.includes(userRole));
+  const effectiveRole = (userRole && userRole !== 'visitor') ? userRole : (profile?.role || 'visitor');
+  const hasAccessByRole = isGlobalAdmin || (allowedRoles && allowedRoles.includes(effectiveRole));
 
   if (allowedRoles && !hasAccessByRole) {
     return (

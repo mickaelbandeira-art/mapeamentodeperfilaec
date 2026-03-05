@@ -16,7 +16,22 @@ WHERE email IN (
     'test.user@aec.com.br'
 );
 
--- 2. GARANTIR STATUS APPROVED NO PROFILE
+-- 2. SINCRONIZAR ROLES (Profiles -> User_Roles)
+-- Garante que o sistema de permissões veja o cargo correto
+INSERT INTO public.user_roles (user_id, role)
+SELECT id, role::public.app_role FROM public.profiles 
+WHERE email IN (
+    'karolayne.asilva@aec.com.br',
+    'test@aec.com.br',
+    'test.user@aec.com.br'
+)
+ON CONFLICT (user_id, role) DO NOTHING;
+
+-- 3. GARANTIR STATUS APPROVED
 UPDATE public.profiles 
 SET status = 'approved' 
-WHERE email = 'karolayne.asilva@aec.com.br';
+WHERE email IN (
+    'karolayne.asilva@aec.com.br',
+    'test@aec.com.br',
+    'test.user@aec.com.br'
+);
