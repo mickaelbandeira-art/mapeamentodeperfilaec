@@ -60,14 +60,18 @@ export const useAuth = () => {
       const { data, error } = await supabase
         .from("user_roles")
         .select("role")
-        .eq("user_id", userId)
-        .single();
+        .eq("user_id", userId);
 
-      console.log("📊 Role encontrado:", { data, error });
+      console.log("📊 Roles encontrados:", { data, error });
 
       if (error) throw error;
-      setUserRole(data?.role || null);
-      console.log("✅ Role configurado:", data?.role);
+
+      // Se houver qualquer role 'admin', define como admin
+      const roles = data?.map(r => r.role) || [];
+      const primaryRole = roles.includes('admin') ? 'admin' : (roles[0] || 'visitor');
+
+      setUserRole(primaryRole);
+      console.log("✅ Role configurado:", primaryRole);
     } catch (error) {
       console.error("❌ Erro ao buscar role:", error);
       setUserRole(null);

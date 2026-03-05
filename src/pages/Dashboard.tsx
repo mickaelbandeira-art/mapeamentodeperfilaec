@@ -162,6 +162,19 @@ const Dashboard = () => {
       return acc;
     }, []);
 
+  // Debug Panel Toggle
+  const [showDebug, setShowDebug] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+        setShowDebug(prev => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   if (loading && !stats) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -173,6 +186,20 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background font-sans pt-24 pb-12 overflow-x-hidden">
       <div className="max-w-[1600px] mx-auto px-6 space-y-12">
+
+        {showDebug && (
+          <div className="bg-destructive/10 border-4 border-destructive p-8 font-mono text-xs space-y-2 animate-in fade-in zoom-in duration-300">
+            <h4 className="font-black uppercase text-destructive border-b-2 border-destructive mb-4">DIAGNOSTIC_TERMINAL // SESSION_LOG</h4>
+            <div className="grid grid-cols-2 gap-4">
+              <div><span className="opacity-50">USER_ID:</span> {profile?.id || 'AUTH_PENDING'}</div>
+              <div><span className="opacity-50">EMAIL_REF:</span> {profile?.email || 'N/A'}</div>
+              <div><span className="opacity-50">FE_ROLE:</span> {userRole || 'VISITOR'}</div>
+              <div><span className="opacity-50">DB_ROLE:</span> {profile?.role || 'N/A'}</div>
+              <div><span className="opacity-50">DB_STATUS:</span> {profile?.status || 'N/A'}</div>
+              <div><span className="opacity-50">DB_SITE:</span> {profile?.site || 'NULL (GLOBAL)'}</div>
+            </div>
+          </div>
+        )}
 
         {/* Radical Header */}
         <div className="border-b-8 border-foreground pb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-8">
