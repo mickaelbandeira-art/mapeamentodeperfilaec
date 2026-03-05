@@ -1,17 +1,15 @@
--- ==============================================================
--- FIX: ISOLAMENTO DE DADOS (DASHBOARD POR INSTRUTOR)
--- Garante que instrutores vejam apenas suas turmas e alunos
--- ==============================================================
+-- 1. DROPPAR PARA PERMITIR MUDANÇA DE NOMES DE PARÂMETROS E EVITAR ERRO 42P13
+DROP FUNCTION IF EXISTS public.search_participants(text, text, text, text, text, text, text);
 
--- 1. ATUALIZAR FUNÇÃO DE BUSCA PARA FILTRAR POR CRIADOR
+-- 2. RE-CRIAR FUNÇÃO COM PREFIXO EXPLÍCITO E VARIAVEIS UNICAS
 CREATE OR REPLACE FUNCTION public.search_participants(
-  search_text TEXT DEFAULT NULL,
-  filter_status TEXT DEFAULT NULL,
-  filter_cargo TEXT DEFAULT NULL,
-  filter_coordinator TEXT DEFAULT NULL,
-  filter_turma TEXT DEFAULT NULL,
-  filter_instructor_email TEXT DEFAULT NULL,
-  filter_site TEXT DEFAULT NULL
+  p_search_text TEXT DEFAULT NULL,
+  p_filter_status TEXT DEFAULT NULL,
+  p_filter_cargo TEXT DEFAULT NULL,
+  p_filter_coordinator TEXT DEFAULT NULL,
+  p_filter_turma TEXT DEFAULT NULL,
+  p_filter_instructor_email TEXT DEFAULT NULL,
+  p_filter_site TEXT DEFAULT NULL
 )
 RETURNS TABLE (
   id UUID,
@@ -36,68 +34,68 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  current_user_email TEXT;
-  user_is_admin BOOLEAN;
-  user_is_manager BOOLEAN;
+  v_user_email TEXT;
+  v_is_admin BOOLEAN;
+  v_is_manager BOOLEAN;
+  v_allowed_sites TEXT[];
 BEGIN
-  -- Identificar usuário e permissões
-  SELECT email INTO current_user_email FROM auth.users WHERE id = auth.uid();
-  user_is_admin := public.is_global_admin();
-  user_is_manager := EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'manager');
+  -- 1. Identificar usuário logado com segurança
+  SELECT u.email INTO v_user_email FROM auth.users u WHERE u.id = auth.uid();
+  v_is_admin := public.is_global_admin();
+  v_is_manager := EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'manager');
+  v_allowed_sites := public.get_current_user_sites();
 
   RETURN QUERY
   SELECT
-    p.id, p.name, p.registration, p.email, p.cargo,
-    (tr.id IS NOT NULL) AS has_completed_test,
-    tr.dominant_profile, tr.score_d, tr.score_i, tr.score_s, tr.score_c,
-    p.site, 
-    tc.name AS class_name,
-    tc.instructor_name,
-    tr.mindset_tipo,
-    tr.vac_dominante,
-    tr.insights_consultivos
-  FROM public.participants p
-  LEFT JOIN public.training_classes tc ON p.class_id = tc.id
-  LEFT JOIN public.test_results tr ON p.registration = tr.registration
+    par.id, 
+    par.name, 
+    par.registration, 
+    par.email, 
+    par.cargo,
+    (res.id IS NOT NULL) AS has_completed_test,
+    res.dominant_profile, 
+    res.score_d, 
+    res.score_i, 
+    res.score_s, 
+    res.score_c,
+    par.site, 
+    cls.name AS class_name,
+    cls.instructor_name,
+    res.mindset_tipo,
+    res.vac_dominante,
+    res.insights_consultivos
+  FROM public.participants par
+  LEFT JOIN public.training_classes cls ON par.class_id = cls.id
+  LEFT JOIN public.test_results res ON par.registration = res.registration
   WHERE
-    -- Isolamento por Praça (Existente)
-    (user_is_admin OR p.site = public.get_current_user_site())
+    -- A) ISOLAMENTO POR PRAÇA
+    (v_is_admin OR par.site = ANY(v_allowed_sites))
     
-    -- NOVO: Isolamento por Instrutor (Se não for Admin/Manager)
+    -- B) ISOLAMENTO POR INSTRUTOR/CRIADOR (Multi-tenant)
     AND (
-      user_is_admin 
-      OR user_is_manager 
-      OR tc.created_by = auth.uid() 
-      OR tc.instructor_email = current_user_email
+      v_is_admin 
+      OR v_is_manager 
+      OR cls.created_by = auth.uid() 
+      OR cls.instructor_email = v_user_email
+      OR par.email = v_user_email -- Próprio perfil se for o caso
+      OR par.coordinator = (SELECT prof.full_name FROM public.profiles prof WHERE prof.id = auth.uid())
     )
 
-    -- Filtros Dinâmicos
-    AND (search_text IS NULL OR p.name ILIKE '%' || search_text || '%')
-    AND (filter_status IS NULL OR
-         CASE filter_status
-           WHEN 'completed' THEN tr.id IS NOT NULL
-           WHEN 'pending' THEN tr.id IS NULL
+    -- C) FILTROS DINÂMICOS (Com prefixos para evitar ambiguidade)
+    AND (p_search_text IS NULL OR (
+          par.name ILIKE '%' || p_search_text || '%' OR 
+          par.registration ILIKE '%' || p_search_text || '%' OR
+          par.email ILIKE '%' || p_search_text || '%'
+        ))
+    AND (p_filter_status IS NULL OR
+         CASE p_filter_status
+           WHEN 'completed' THEN res.id IS NOT NULL
+           WHEN 'pending' THEN res.id IS NULL
            ELSE true
          END)
-    AND (filter_cargo IS NULL OR p.cargo ILIKE filter_cargo)
-    AND (filter_turma IS NULL OR tc.name ILIKE '%' || filter_turma || '%')
-  ORDER BY p.created_at DESC;
+    AND (p_filter_cargo IS NULL OR par.cargo ILIKE p_filter_cargo)
+    AND (p_filter_turma IS NULL OR cls.name ILIKE '%' || p_filter_turma || '%')
+    AND (p_filter_instructor_email IS NULL OR cls.instructor_email = p_filter_instructor_email)
+  ORDER BY par.created_at DESC;
 END;
 $$;
-
--- 2. AJUSTAR RLS EM TRAINING_CLASSES (Se houver)
-ALTER TABLE public.training_classes ENABLE ROW LEVEL SECURITY;
-
-DROP POLICY IF EXISTS "Instrutores veem suas turmas" ON public.training_classes;
-CREATE POLICY "Instrutores veem suas turmas"
-ON public.training_classes
-FOR SELECT
-USING (
-  public.is_global_admin()
-  OR EXISTS (SELECT 1 FROM public.user_roles WHERE user_id = auth.uid() AND role = 'manager')
-  OR created_by = auth.uid()
-  OR site = public.get_current_user_site()
-);
-
--- 3. REGENERAR DASHBOARD STATS PARA RESPEITAR O CRIADOR (OPCIONAL/SIMPLIFICADO)
--- Nota: Como o Dashboard Stats é uma View, ele herda as restrições de RLS se as tabelas base tiverem.
