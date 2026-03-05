@@ -46,8 +46,11 @@ DECLARE
   v_is_manager BOOLEAN;
   v_allowed_sites TEXT[];
 BEGIN
-  -- Identificar usuário logado
-  SELECT email, full_name INTO v_user_email, v_user_name FROM public.profiles WHERE id = auth.uid();
+  -- Identificar usuário logado com prefixos para evitar ambiguidade (Erro 42702)
+  SELECT prof.email, prof.full_name 
+  INTO v_user_email, v_user_name 
+  FROM public.profiles prof 
+  WHERE prof.id = auth.uid();
   v_is_admin := public.is_global_admin();
   v_is_manager := EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'manager');
   v_allowed_sites := public.get_current_user_sites();
