@@ -8,7 +8,8 @@ import { AverageScoresChart } from "@/components/dashboard/AverageScoresChart";
 import { SearchFilters } from "@/components/dashboard/SearchFilters";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ClassManagement } from "@/components/dashboard/ClassManagement";
-import { Users, CheckCircle, Clock, TrendingUp, LogOut, GraduationCap, ClipboardList, Loader2 } from "lucide-react";
+import { ApprovalManagement } from "@/components/dashboard/ApprovalManagement";
+import { Users, CheckCircle, Clock, TrendingUp, LogOut, GraduationCap, ClipboardList, Loader2, ShieldAlert } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 interface DashboardStats {
@@ -51,10 +52,22 @@ const Dashboard = () => {
   const [cargos, setCargos] = useState<string[]>([]);
   const [turmas, setTurmas] = useState<string[]>([]);
   const [instructors, setInstructors] = useState<{ name: string; email: string }[]>([]);
+  const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
 
   useEffect(() => {
     fetchDashboardData();
-  }, [searchText, filterCargo, filterStatus, filterTurma, filterInstructor]);
+    if (profile?.role === 'admin') {
+      fetchPendingCount();
+    }
+  }, [searchText, filterCargo, filterStatus, filterTurma, filterInstructor, profile]);
+
+  const fetchPendingCount = async () => {
+    const { count } = await supabase
+      .from("profiles")
+      .select("*", { count: 'exact', head: true })
+      .eq("status", "pending");
+    setPendingApprovalsCount(count || 0);
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -207,6 +220,20 @@ const Dashboard = () => {
               <GraduationCap className="w-5 h-5" />
               Gestão de Turmas
             </TabsTrigger>
+            {profile?.role === 'admin' && (
+              <TabsTrigger
+                value="approvals"
+                className="px-8 py-4 border-4 border-foreground font-black uppercase italic data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground data-[state=active]:shadow-none shadow-[6px_6px_0px_var(--foreground)] translate-x-[-2px] translate-y-[-2px] transition-all flex items-center gap-3 relative overflow-visible"
+              >
+                <ShieldAlert className="w-5 h-5" />
+                Aprovações
+                {pendingApprovalsCount > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-[10px] font-black px-2 py-0.5 border-2 border-foreground animate-bounce">
+                    {pendingApprovalsCount}
+                  </span>
+                )}
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="participants" className="space-y-12 animate-in slide-in-from-bottom-8 duration-700">
@@ -301,6 +328,14 @@ const Dashboard = () => {
               <ClassManagement />
             </div>
           </TabsContent>
+
+          {profile?.role === 'admin' && (
+            <TabsContent value="approvals" className="animate-in slide-in-from-bottom-8 duration-700">
+              <div className="p-4 bg-background">
+                <ApprovalManagement />
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>

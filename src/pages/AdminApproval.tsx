@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, UserCheck, UserX, Clock, ShieldCheck, Mail, MapPin, Briefcase, Hash, ArrowRight } from "lucide-react";
+import { Loader2, UserCheck, UserX, Clock, ShieldCheck, Mail, MapPin, Briefcase, Hash, ArrowLeft } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const AdminApproval = () => {
+    const navigate = useNavigate();
     const [pendingUsers, setPendingUsers] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [processingId, setProcessingId] = useState<string | null>(null);
@@ -80,6 +82,13 @@ const AdminApproval = () => {
                 {/* Radical Header */}
                 <div className="border-b-8 border-foreground pb-8 flex flex-col md:flex-row justify-between items-start md:items-end gap-8 relative overflow-hidden">
                     <div className="space-y-4">
+                        <button
+                            onClick={() => navigate("/dashboard")}
+                            className="flex items-center gap-2 font-black text-xs uppercase hover:text-primary transition-colors mb-4 italic"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                            Voltar ao Painel
+                        </button>
                         <div className="bg-primary text-primary-foreground inline-block px-4 py-1 text-xs font-black uppercase italic tracking-widest translate-x-1">
                             Security // Access // Control
                         </div>

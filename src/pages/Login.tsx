@@ -66,7 +66,7 @@ const Login = () => {
         // Tentativa 1: Busca completa (com site e matricula)
         let { data: profileData, error: profileError } = await supabase
           .from("profiles")
-          .select("site, role, matricula")
+          .select("site, role, matricula, status")
           .eq("id", data.user.id)
           .maybeSingle();
 
@@ -124,22 +124,26 @@ const Login = () => {
           return;
         }
 
+        const isAdmin = profileData.role === "admin";
         const userSite = profileData.site?.trim().toUpperCase();
         const selectedSite = values.site.trim().toUpperCase();
 
-        console.log(`📊 Validação: Registrada=${userSite || 'N/A'}, Selecionada=${selectedSite}`);
+        console.log(`📊 Validação: Registrada=${userSite || 'N/A'}, Selecionada=${selectedSite}, Admin=${isAdmin}`);
 
-        // Só valida se a coluna 'site' existir no banco (userSite não será undefined)
-        if (userSite && userSite !== selectedSite) {
-          console.warn(`🚫 BLOQUEIO: Praça incompatível.`);
-          await supabase.auth.signOut();
-          setIsLoading(false);
-          toast({
-            title: "Acesso Inválido para esta Praça",
-            description: `Sua matrícula (${profileData.matricula || 'ADM'}) está vinculada exclusivamente à praça ${profileData.site}. Selecione a unidade correta.`,
-            variant: "destructive",
-          });
-          return;
+        // Validação de Praça: Admins ignoram, outros verificam se a praça está na lista permitida
+        if (!isAdmin && userSite) {
+          const allowedSites = userSite.split(',').map(s => s.trim().toUpperCase());
+          if (!allowedSites.includes(selectedSite)) {
+            console.warn(`🚫 BLOQUEIO: Praça incompatível.`);
+            await supabase.auth.signOut();
+            setIsLoading(false);
+            toast({
+              title: "Acesso Inválido para esta Praça",
+              description: `Sua matrícula (${profileData.matricula || 'N/A'}) não tem permissão para a praça ${selectedSite}. Praças autorizadas: ${userSite}.`,
+              variant: "destructive",
+            });
+            return;
+          }
         }
 
         // Se o usuário tem site vazio mas a coluna existe, vinculamos agora
