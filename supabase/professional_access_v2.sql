@@ -74,7 +74,7 @@ BEGIN
   -- Link via registration for test results
   LEFT JOIN public.test_results tr ON p.registration = tr.registration
   -- Link via instructor email as a fallback since class_id is missing in participants
-  LEFT JOIN public.training_classes tc ON (tr.class_name = tc.name OR p.instructor_name = tc.instructor_name)
+  LEFT JOIN public.training_classes tc ON (tr.class_name = tc.name OR tr.instructor_name = tc.instructor_name)
   WHERE
     -- A) ISOLAMENTO POR PRAÇA
     (v_is_admin OR p.site = ANY(v_allowed_sites))
