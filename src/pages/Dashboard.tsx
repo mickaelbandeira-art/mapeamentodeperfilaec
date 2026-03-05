@@ -73,40 +73,16 @@ const Dashboard = () => {
     try {
       setLoading(true);
 
-      // Stats: filter by user's site (RLS on the view handles enforcement)
-      let statsData, statsError;
-      try {
-        const statsQuery = supabase.from("dashboard_stats").select("*");
-        const response = profile?.site
-          ? await statsQuery.eq("site", profile.site).maybeSingle()
-          : await statsQuery.select("*"); // No site filter = get all for aggregation
-
-        if (Array.isArray(response.data)) {
-          // Aggregate results if multiple sites returned
-          const aggregated = response.data.reduce((acc, curr) => ({
-            total_participants: (acc.total_participants || 0) + (curr.total_participants || 0),
-            total_completed_tests: (acc.total_completed_tests || 0) + (curr.total_completed_tests || 0),
-            pending_tests: (acc.pending_tests || 0) + (curr.pending_tests || 0),
-            completion_rate: 0 // Will recalculate below
-          }), {});
-
-          if (aggregated.total_participants > 0) {
-            aggregated.completion_rate = (aggregated.total_completed_tests / aggregated.total_participants) * 100;
-          }
-
-          statsData = aggregated;
-        } else {
-          statsData = response.data;
-        }
-        statsError = response.error;
-      } catch (e) {
-        console.error("Erro ao carregar estatísticas:", e);
-      }
+      // Stats: filter by user's site via RPC for proper isolation
+      const { data: statsData, error: statsError } = await supabase.rpc("get_dashboard_stats", {
+        p_site: profile?.site || null
+      });
 
       if (statsError) {
         setStats(null);
       } else {
-        setStats(statsData);
+        // RPC returns an array, take the first item
+        setStats(Array.isArray(statsData) ? statsData[0] : statsData);
       }
 
       // Participants: RPC enforces site scoping via auth.uid() in the DB function
