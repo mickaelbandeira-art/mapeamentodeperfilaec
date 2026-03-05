@@ -41,12 +41,13 @@ SECURITY DEFINER
 AS $$
 DECLARE
   v_user_email TEXT;
+  v_user_name TEXT;
   v_is_admin BOOLEAN;
   v_is_manager BOOLEAN;
   v_allowed_sites TEXT[];
 BEGIN
   -- Identificar usuário logado
-  v_user_email := (SELECT u.email FROM auth.users u WHERE u.id = auth.uid());
+  SELECT email, full_name INTO v_user_email, v_user_name FROM public.profiles WHERE id = auth.uid();
   v_is_admin := public.is_global_admin();
   v_is_manager := EXISTS (SELECT 1 FROM public.user_roles ur WHERE ur.user_id = auth.uid() AND ur.role = 'manager');
   v_allowed_sites := public.get_current_user_sites();
@@ -65,27 +66,27 @@ BEGIN
     tr.score_s, 
     tr.score_c,
     p.site, 
-    COALESCE(tc.name, tr.class_name) AS class_name,
-    COALESCE(tc.instructor_name, tr.instructor_name) AS instructor_name,
+    COALESCE(tr.class_name, tc.name) AS class_name,
+    COALESCE(tr.instructor_name, tc.name) AS instructor_name,
     tr.mindset_tipo,
     tr.vac_dominante,
     tr.insights_consultivos
   FROM public.participants p
   -- Link via registration for test results
   LEFT JOIN public.test_results tr ON p.registration = tr.registration
-  -- Link via instructor email as a fallback since class_id is missing in participants
-  LEFT JOIN public.training_classes tc ON (tr.class_name = tc.name OR tr.instructor_name = tc.instructor_name)
+  -- Link via class name for training metadata (Avoid non-existent tc columns)
+  LEFT JOIN public.training_classes tc ON (tr.class_name = tc.name)
   WHERE
     -- A) ISOLAMENTO POR PRAÇA
     (v_is_admin OR p.site = ANY(v_allowed_sites))
     
-    -- B) ISOLAMENTO POR INSTRUTOR (Multi-tenant)
+    -- B) ISOLAMENTO POR INSTRUTOR/COORDENADOR (Multi-tenant)
     AND (
       v_is_admin 
       OR v_is_manager 
       OR tc.created_by = auth.uid() 
-      OR tc.instructor_email = v_user_email
       OR tr.instructor_email = v_user_email
+      OR p.coordinator = v_user_name
       OR p.email = v_user_email
     )
 
@@ -102,8 +103,8 @@ BEGIN
            ELSE true
          END)
     AND (filter_cargo IS NULL OR p.cargo ILIKE filter_cargo)
-    AND (filter_turma IS NULL OR COALESCE(tc.name, tr.class_name) ILIKE '%' || filter_turma || '%')
-    AND (filter_instructor_email IS NULL OR COALESCE(tc.instructor_email, tr.instructor_email) = filter_instructor_email)
+    AND (filter_turma IS NULL OR COALESCE(tr.class_name, tc.name) ILIKE '%' || filter_turma || '%')
+    AND (filter_instructor_email IS NULL OR tr.instructor_email = filter_instructor_email)
     AND (filter_site IS NULL OR p.site = filter_site)
   ORDER BY p.created_at DESC;
 END;
