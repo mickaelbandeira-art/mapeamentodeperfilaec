@@ -40,26 +40,15 @@ interface Participant {
 }
 
 const Dashboard = () => {
-  const { signOut, profile } = useAuth();
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [participants, setParticipants] = useState<Participant[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [searchText, setSearchText] = useState("");
-  const [filterCargo, setFilterCargo] = useState("all");
-  const [filterStatus, setFilterStatus] = useState("all");
-  const [filterTurma, setFilterTurma] = useState("all");
-  const [filterInstructor, setFilterInstructor] = useState("all");
-  const [cargos, setCargos] = useState<string[]>([]);
-  const [turmas, setTurmas] = useState<string[]>([]);
-  const [instructors, setInstructors] = useState<{ name: string; email: string }[]>([]);
-  const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
+  const { signOut, profile, userRole } = useAuth();
+  const isGlobalAdmin = userRole === 'admin';
 
   useEffect(() => {
     fetchDashboardData();
-    if (profile?.role === 'admin') {
+    if (isGlobalAdmin) {
       fetchPendingCount();
     }
-  }, [searchText, filterCargo, filterStatus, filterTurma, filterInstructor, profile]);
+  }, [searchText, filterCargo, filterStatus, filterTurma, filterInstructor, profile, isGlobalAdmin]);
 
   const fetchPendingCount = async () => {
     const { count } = await supabase
@@ -220,7 +209,7 @@ const Dashboard = () => {
               <GraduationCap className="w-5 h-5" />
               Gestão de Turmas
             </TabsTrigger>
-            {profile?.role === 'admin' && (
+            {isGlobalAdmin && (
               <TabsTrigger
                 value="approvals"
                 className="px-8 py-4 border-4 border-foreground font-black uppercase italic data-[state=active]:bg-secondary data-[state=active]:text-secondary-foreground data-[state=active]:shadow-none shadow-[6px_6px_0px_var(--foreground)] translate-x-[-2px] translate-y-[-2px] transition-all flex items-center gap-3 relative overflow-visible"
@@ -329,7 +318,7 @@ const Dashboard = () => {
             </div>
           </TabsContent>
 
-          {profile?.role === 'admin' && (
+          {isGlobalAdmin && (
             <TabsContent value="approvals" className="animate-in slide-in-from-bottom-8 duration-700">
               <div className="p-4 bg-background">
                 <ApprovalManagement />

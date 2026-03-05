@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 import { Loader2, UserCheck, UserX, Clock, ShieldCheck, Mail, MapPin, Briefcase, Hash } from "lucide-react";
 
 export const ApprovalManagement = () => {
@@ -76,14 +77,23 @@ export const ApprovalManagement = () => {
     return (
         <div className="space-y-12 animate-in slide-in-from-bottom-8 duration-700">
             {/* Header Mini-Summary */}
-            <div className="flex items-center gap-4 bg-foreground text-background p-6 border-4 border-foreground shadow-[10px_10px_0px_var(--secondary)]">
-                <ShieldCheck className="w-12 h-12 text-primary" />
-                <div>
-                    <h2 className="text-2xl font-black uppercase italic italic leading-none">Status de Segurança</h2>
-                    <p className="font-black text-xs uppercase italic opacity-70 tracking-tighter">
-                        {pendingUsers.length} requisições aguardando processamento heurístico
-                    </p>
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-foreground text-background p-6 border-4 border-foreground shadow-[10px_10px_0px_var(--secondary)]">
+                <div className="flex items-center gap-4">
+                    <ShieldCheck className="w-12 h-12 text-primary" />
+                    <div>
+                        <h2 className="text-2xl font-black uppercase italic italic leading-none">Status de Segurança</h2>
+                        <p className="font-black text-xs uppercase italic opacity-70 tracking-tighter">
+                            {pendingUsers.length} requisições aguardando processamento heurístico
+                        </p>
+                    </div>
                 </div>
+                <button
+                    onClick={fetchPendingUsers}
+                    className="border-2 border-background px-4 py-2 text-[10px] font-black uppercase italic hover:bg-background hover:text-foreground transition-all flex items-center gap-2"
+                >
+                    <Loader2 className={cn("w-3 h-3", isLoading && "animate-spin")} />
+                    Sincronizar Terminal
+                </button>
             </div>
 
             {pendingUsers.length === 0 ? (
@@ -97,6 +107,14 @@ export const ApprovalManagement = () => {
                     <div className="space-y-4">
                         <h2 className="text-5xl font-black uppercase italic tracking-tighter">Fila_Vazia</h2>
                         <p className="text-sm font-bold uppercase opacity-50 italic">Nenhum privilégio administrativo solicitado...</p>
+                        <div className="pt-8">
+                            <button
+                                onClick={fetchPendingUsers}
+                                className="bg-foreground text-background px-8 py-4 font-black uppercase italic text-sm hover:bg-primary hover:text-primary-foreground transition-all border-4 border-foreground shadow-[8px_8px_0px_var(--secondary)] active:shadow-none active:translate-x-1 active:translate-y-1"
+                            >
+                                Verificar Novamente
+                            </button>
+                        </div>
                     </div>
                 </div>
             ) : (
