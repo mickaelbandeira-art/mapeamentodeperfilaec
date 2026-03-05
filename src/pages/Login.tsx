@@ -93,7 +93,7 @@ const Login = () => {
         if (profileError) {
           console.error("❌ Erro fatal ao buscar perfil:", profileError);
           await supabase.auth.signOut();
-          throw new Error("Erro de acesso. Por favor, execute o script SQL de atualização.");
+          throw new Error(`Erro de acesso (${profileError.code}): ${profileError.message}. Por favor, verifique se executou o script SQL.`);
         }
 
         if (!profileData) {

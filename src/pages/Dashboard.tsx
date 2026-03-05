@@ -40,8 +40,7 @@ interface Participant {
 }
 
 const Dashboard = () => {
-  const { signOut, profile, userRole } = useAuth();
-  const isGlobalAdmin = userRole === 'admin';
+  const { signOut, profile, userRole, isGlobalAdmin } = useAuth();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,8 +79,25 @@ const Dashboard = () => {
         const statsQuery = supabase.from("dashboard_stats").select("*");
         const response = profile?.site
           ? await statsQuery.eq("site", profile.site).maybeSingle()
-          : await statsQuery.maybeSingle();
-        statsData = response.data;
+          : await statsQuery.select("*"); // No site filter = get all for aggregation
+
+        if (Array.isArray(response.data)) {
+          // Aggregate results if multiple sites returned
+          const aggregated = response.data.reduce((acc, curr) => ({
+            total_participants: (acc.total_participants || 0) + (curr.total_participants || 0),
+            total_completed_tests: (acc.total_completed_tests || 0) + (curr.total_completed_tests || 0),
+            pending_tests: (acc.pending_tests || 0) + (curr.pending_tests || 0),
+            completion_rate: 0 // Will recalculate below
+          }), {});
+
+          if (aggregated.total_participants > 0) {
+            aggregated.completion_rate = (aggregated.total_completed_tests / aggregated.total_participants) * 100;
+          }
+
+          statsData = aggregated;
+        } else {
+          statsData = response.data;
+        }
         statsError = response.error;
       } catch (e) {
         console.error("Erro ao carregar estatísticas:", e);

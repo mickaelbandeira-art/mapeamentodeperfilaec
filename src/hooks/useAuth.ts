@@ -12,7 +12,7 @@ export const useAuth = () => {
 
   // Derived: praça (site) do usuário logado
   const userSite = profile?.site ?? null;
-  const isGlobalAdmin = userRole === 'admin';
+  const isGlobalAdmin = userRole === 'admin' || profile?.role === 'admin';
 
   useEffect(() => {
     console.log("🔐 Inicializando autenticação...");
