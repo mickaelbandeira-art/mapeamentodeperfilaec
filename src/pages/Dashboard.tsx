@@ -11,6 +11,7 @@ import { ClassManagement } from "@/components/dashboard/ClassManagement";
 import { ApprovalManagement } from "@/components/dashboard/ApprovalManagement";
 import { Users, CheckCircle, Clock, TrendingUp, LogOut, GraduationCap, ClipboardList, Loader2, ShieldAlert } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { DateRange } from "react-day-picker";
 
 interface DashboardStats {
   total_participants: number;
@@ -53,13 +54,14 @@ const Dashboard = () => {
   const [turmas, setTurmas] = useState<string[]>([]);
   const [instructors, setInstructors] = useState<{ name: string; email: string }[]>([]);
   const [pendingApprovalsCount, setPendingApprovalsCount] = useState(0);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>();
 
   useEffect(() => {
     fetchDashboardData();
     if (isGlobalAdmin) {
       fetchPendingCount();
     }
-  }, [searchText, filterCargo, filterStatus, filterTurma, filterInstructor, profile, isGlobalAdmin]);
+  }, [searchText, filterCargo, filterStatus, filterTurma, filterInstructor, profile, isGlobalAdmin, dateRange]);
 
   const fetchPendingCount = async () => {
     const { count } = await supabase
@@ -75,7 +77,9 @@ const Dashboard = () => {
 
       // Stats: filter by user's site via RPC for proper isolation
       const { data: statsData, error: statsError } = await supabase.rpc("get_dashboard_stats", {
-        p_site: profile?.site || null
+        p_site: profile?.site || null,
+        p_start_date: dateRange?.from?.toISOString() || null,
+        p_end_date: dateRange?.to?.toISOString() || null,
       });
 
       if (statsError) {
@@ -94,6 +98,8 @@ const Dashboard = () => {
         filter_turma: filterTurma === "all" ? null : filterTurma,
         filter_instructor_email: filterInstructor === "all" ? null : filterInstructor,
         filter_site: profile?.site || null, // RPC ignores this for non-admins and uses auth context
+        p_start_date: dateRange?.from?.toISOString() || null,
+        p_end_date: dateRange?.to?.toISOString() || null,
       });
 
       if (participantsError) throw participantsError;
@@ -334,7 +340,9 @@ const Dashboard = () => {
                 turmas={turmas}
                 filterSite={profile?.site || "all"}
                 onSiteChange={() => { }}
-                showSiteFilter={false}
+                showSiteFilter={isGlobalAdmin}
+                dateRange={dateRange}
+                onDateRangeChange={setDateRange}
               />
 
               <div className="border-4 border-foreground shadow-[15px_15px_0px_var(--foreground)] overflow-hidden">

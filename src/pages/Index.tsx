@@ -12,7 +12,7 @@ type Screen = 'landing' | 'instructor_setup' | 'registration' | 'quiz_disc' | 'q
 interface ParticipantData {
   registration: string;
   name: string;
-  email: string;
+  email?: string;
   cpf: string;
   site: string;
   class_id?: string;

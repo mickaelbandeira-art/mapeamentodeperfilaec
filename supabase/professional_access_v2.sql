@@ -15,7 +15,9 @@ CREATE OR REPLACE FUNCTION public.search_participants(
   filter_coordinator TEXT DEFAULT NULL,
   filter_turma TEXT DEFAULT NULL,
   filter_instructor_email TEXT DEFAULT NULL,
-  filter_site TEXT DEFAULT NULL
+  filter_site TEXT DEFAULT NULL,
+  p_start_date TIMESTAMP DEFAULT NULL,
+  p_end_date TIMESTAMP DEFAULT NULL
 )
 RETURNS TABLE (
   id UUID,
@@ -109,6 +111,8 @@ BEGIN
     AND (filter_turma IS NULL OR COALESCE(tr.class_name, tc.name) ILIKE '%' || filter_turma || '%')
     AND (filter_instructor_email IS NULL OR tr.instructor_email = filter_instructor_email)
     AND (filter_site IS NULL OR p.site = filter_site)
+    AND (p_start_date IS NULL OR (tr.completed_at >= p_start_date OR p.created_at >= p_start_date))
+    AND (p_end_date IS NULL OR (tr.completed_at <= p_end_date OR p.created_at <= p_end_date))
   ORDER BY p.created_at DESC;
 END;
 $$;

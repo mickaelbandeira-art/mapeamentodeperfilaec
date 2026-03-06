@@ -4,7 +4,9 @@
 -- ==============================================================
 
 CREATE OR REPLACE FUNCTION public.get_dashboard_stats(
-  p_site TEXT DEFAULT NULL
+  p_site TEXT DEFAULT NULL,
+  p_start_date TIMESTAMP DEFAULT NULL,
+  p_end_date TIMESTAMP DEFAULT NULL
 )
 RETURNS TABLE (
   total_participants BIGINT,
@@ -55,6 +57,10 @@ BEGIN
       )
       -- C) FILTRO POR SITE ESPECÍFICO (Se passado)
       AND (p_site IS NULL OR p.site = p_site)
+
+      -- D) FILTRO POR DATA
+      AND (p_start_date IS NULL OR (tr.completed_at >= p_start_date OR p.created_at >= p_start_date))
+      AND (p_end_date IS NULL OR (tr.completed_at <= p_end_date OR p.created_at <= p_end_date))
   )
   SELECT 
     COUNT(*)::BIGINT as total_participants,

@@ -11,7 +11,7 @@ interface QuizScreenProps {
   participantData: {
     registration: string;
     name: string;
-    email: string;
+    email?: string;
     cpf: string;
   };
 }

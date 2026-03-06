@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
 interface RegistrationScreenProps {
-  onComplete: (data: { registration: string; name: string; email: string; cpf: string; site: string; class_id?: string }) => void;
+  onComplete: (data: { registration: string; name: string; email?: string; cpf: string; site: string; class_id?: string }) => void;
   initialMode: 'colaborador' | 'novato';
   onBack: () => void;
 }
@@ -109,10 +109,10 @@ export const RegistrationScreen = ({ onComplete, initialMode, onBack }: Registra
     e.preventDefault();
 
     if (mode === 'colaborador') {
-      if (!registration || !name || !email) {
+      if (!registration || !name) {
         toast({
           title: "Campos obrigatórios",
-          description: "Por favor, preencha sua matrícula e verifique se seu nome e e-mail foram carregados.",
+          description: "Por favor, preencha sua matrícula e verifique se seu nome foi carregado.",
           variant: "destructive",
         });
         return;
@@ -287,7 +287,7 @@ export const RegistrationScreen = ({ onComplete, initialMode, onBack }: Registra
                     </select>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email" className="font-black uppercase text-xs tracking-widest text-foreground">E-mail *</Label>
+                    <Label htmlFor="email" className="font-black uppercase text-xs tracking-widest text-foreground">E-mail</Label>
                     <input
                       id="email"
                       type="email"
@@ -298,7 +298,6 @@ export const RegistrationScreen = ({ onComplete, initialMode, onBack }: Registra
                         }`}
                       disabled={loading}
                       readOnly={isAutoFilled}
-                      required
                     />
                   </div>
                 </div>
