@@ -21,7 +21,7 @@ async function testGemini() {
 
         console.log("Model initialized. Generating content...");
 
-        const result = await model.generateContent("Diga 'Olá, o modelo gemini-2.5-flash com apiVersion v1beta está funcionando perfeitamente!'");
+        const result = await model.generateContent("Diga 'Olá, o modelo gemini-2.5-flash está funcionando perfeitamente!'");
         const response = await result.response;
 
         console.log("\n✅ SUCCESS! Response from Gemini:");

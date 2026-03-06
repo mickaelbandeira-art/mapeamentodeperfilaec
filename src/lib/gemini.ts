@@ -1,7 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
-
-const apiKey = import.meta.env.VITE_GOOGLE_API_KEY || (process as any).env?.VITE_GOOGLE_API_KEY || (process as any).env?.GOOGLE_API_KEY || "";
-const genAI = new GoogleGenerativeAI(apiKey);
+import { supabase } from "@/integrations/supabase/client";
 
 export interface ProfileData {
     disc: { D: number; I: number; S: number; C: number };
@@ -12,16 +9,6 @@ export interface ProfileData {
 
 export const generateConsultativeInsights = async (data: ProfileData): Promise<string> => {
     try {
-        if (!apiKey) {
-            console.warn("⚠️ Google AI API Key não configurada. Usando fallback estático.");
-            return "O Plano de Ação Personalizado não pôde ser gerado automaticamente devido à falta da chave de API. Por favor, consulte seu gestor para uma análise manual dos perfis DISC, Mindset e VAC.";
-        }
-
-        const model = genAI.getGenerativeModel({
-            model: "gemini-2.5-flash",
-            apiVersion: "v1"
-        } as any);
-
         const prompt = `
       Você é um mentor sênior e consultor de desenvolvimento humano da empresa AeC.
       Sua missão é gerar um relatório de Mapeamento de Perfil 360º altamente personalizado e consultivo para o usuário ${data.userName}.
@@ -43,11 +30,19 @@ export const generateConsultativeInsights = async (data: ProfileData): Promise<s
       Inicie com uma saudação personalizada destacando a potência única deste cruzamento de perfis.
     `;
 
-        const result = await model.generateContent(prompt);
-        const response = await result.response;
-        return response.text();
-    } catch (error) {
-        console.error("Error calling Gemini API:", error);
-        return "Ocorreu um erro ao gerar seus insights com IA. Por favor, tente novamente mais tarde.";
+        console.log("Chamando Edge Function gemini-ai...");
+        const { data: response, error } = await supabase.functions.invoke('gemini-ai', {
+            body: { prompt }
+        });
+
+        if (error) {
+            console.error("Erro na Edge Function:", error);
+            throw new Error(error.message || "Erro ao chamar a função de IA");
+        }
+
+        return response.text || response.insights || "Relatório gerado com sucesso.";
+    } catch (error: any) {
+        console.error("Error calling AI via Supabase Edge Function:", error);
+        return `Ocorreu um erro ao gerar seus insights com IA via Edge Function. Por favor, tente novamente mais tarde. (${error.message || "Erro desconhecido"})`;
     }
 };
