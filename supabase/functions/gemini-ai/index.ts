@@ -15,12 +15,17 @@ serve(async (req) => {
   try {
     const { prompt } = await req.json()
     
-    // Recupera a chave que vamos configurar no próximo passo
+    // Recupera a chave do segredo do Supabase
     const apiKey = Deno.env.get('GEMINI_API_KEY')
     
-    // URL para o Gemini 1.5 Flash (mais rápido e estável)
+    if (!apiKey) {
+      console.error("ERRO: GEMINI_API_KEY não foi encontrada nos Secrets do Supabase.");
+      throw new Error("Configuração incompleta: Chave de API não encontrada no servidor.");
+    }
+
+    // URL para o Gemini 1.5 Flash
     const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`
-    console.log(`Calling Google API: ${url.split('key=')[0]}key=HIDDEN`);
+    console.log(`Iniciando chamada ao Google Gemini API (Prompt de ${prompt.length} caracteres)...`);
     const response = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
