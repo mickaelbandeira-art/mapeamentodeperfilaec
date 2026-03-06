@@ -36,13 +36,22 @@ export const generateConsultativeInsights = async (data: ProfileData): Promise<s
         });
 
         if (error) {
-            console.error("Erro na Edge Function:", error);
-            throw new Error(error.message || "Erro ao chamar a função de IA");
+            console.error("Erro detalhado da Edge Function:", error);
+            // Tenta extrair a mensagem de erro se o body for retornado
+            let details = "";
+            try {
+                if ('context' in error && (error as any).context?.json) {
+                    const jsonErr = (error as any).context.json;
+                    details = jsonErr.error || JSON.stringify(jsonErr);
+                }
+            } catch (e) {}
+
+            throw new Error(details || error.message || "Erro ao chamar a função de IA");
         }
 
         return response.text || response.insights || "Relatório gerado com sucesso.";
     } catch (error: any) {
         console.error("Error calling AI via Supabase Edge Function:", error);
-        return `Ocorreu um erro ao gerar seus insights com IA via Edge Function. Por favor, tente novamente mais tarde. (${error.message || "Erro desconhecido"})`;
+        return `Ocorreu um erro ao gerar seus insights com IA via Edge Function. (${error.message || "Erro desconhecido"})`;
     }
 };

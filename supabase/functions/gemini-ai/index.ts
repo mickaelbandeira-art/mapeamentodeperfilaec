@@ -23,8 +23,8 @@ serve(async (req) => {
       throw new Error("Configuração incompleta: Chave de API não encontrada no servidor.");
     }
 
-    // URL para o Gemini 1.5 Flash
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`
+    // URL para o Gemini 2.5 Flash
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`
     console.log(`Iniciando chamada ao Google Gemini API (Prompt de ${prompt.length} caracteres)...`);
     const response = await fetch(url, {
       method: 'POST',
