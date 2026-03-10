@@ -21,7 +21,7 @@ export const DiscChart = ({ data }: DiscChartProps) => {
             outerRadius={100}
             paddingAngle={5}
             dataKey="value"
-            stroke="var(--foreground)"
+            stroke="hsl(var(--foreground))"
             strokeWidth={4}
           >
             {data.map((entry, index) => (
@@ -34,19 +34,19 @@ export const DiscChart = ({ data }: DiscChartProps) => {
           </Pie>
           <Tooltip
             contentStyle={{
-              backgroundColor: 'var(--foreground)',
-              border: '4px solid var(--primary)',
+              backgroundColor: 'hsl(var(--foreground))',
+              border: '4px solid hsl(var(--primary))',
               borderRadius: '0px',
               padding: '10px'
             }}
             itemStyle={{
-              color: 'var(--background)',
+              color: 'hsl(var(--background))',
               fontWeight: '900',
               textTransform: 'uppercase',
               fontStyle: 'italic',
               fontSize: '10px'
             }}
-            cursor={{ stroke: 'var(--primary)', strokeWidth: 2 }}
+            cursor={{ stroke: 'hsl(var(--primary))', strokeWidth: 2 }}
           />
         </PieChart>
       </ResponsiveContainer>
@@ -55,8 +55,11 @@ export const DiscChart = ({ data }: DiscChartProps) => {
       <div className="absolute bottom-0 left-0 right-0 flex justify-center gap-4 flex-wrap pb-2">
         {data.map((item, i) => (
           <div key={i} className="flex items-center gap-2">
-            <div className="w-3 h-3 border-2 border-foreground" style={{ backgroundColor: item.color }} />
-            <span className="text-[10px] font-black uppercase italic">{item.name}</span>
+            <div
+              className="w-3 h-3 border-2 border-foreground"
+              style={{ backgroundColor: `hsl(${item.color})` }}
+            />
+            <span className="text-[10px] font-black uppercase italic text-foreground">{item.name}</span>
           </div>
         ))}
       </div>

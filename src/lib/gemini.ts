@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 
 export interface ProfileData {
     disc: { D: number; I: number; S: number; C: number };
@@ -30,28 +30,12 @@ export const generateConsultativeInsights = async (data: ProfileData): Promise<s
       Inicie com uma saudação personalizada destacando a potência única deste cruzamento de perfis.
     `;
 
-        console.log("Chamando Edge Function gemini-ai...");
-        const { data: response, error } = await supabase.functions.invoke('gemini-ai', {
-            body: { prompt }
-        });
+        console.log("Chamando API local para geração de insights...");
+        const response = await api.post('/ai/generate', { prompt });
 
-        if (error) {
-            console.error("Erro detalhado da Edge Function:", error);
-            // Tenta extrair a mensagem de erro se o body for retornado
-            let details = "";
-            try {
-                if ('context' in error && (error as any).context?.json) {
-                    const jsonErr = (error as any).context.json;
-                    details = jsonErr.error || JSON.stringify(jsonErr);
-                }
-            } catch (e) {}
-
-            throw new Error(details || error.message || "Erro ao chamar a função de IA");
-        }
-
-        return response.text || response.insights || "Relatório gerado com sucesso.";
+        return response.text || "Relatório gerado com sucesso.";
     } catch (error: any) {
-        console.error("Error calling AI via Supabase Edge Function:", error);
-        return `Ocorreu um erro ao gerar seus insights com IA via Edge Function. (${error.message || "Erro desconhecido"})`;
+        console.error("Error calling AI via local backend:", error);
+        return `Ocorreu um erro ao gerar seus insights com IA. (${error.message || "Erro desconhecido"})`;
     }
 };

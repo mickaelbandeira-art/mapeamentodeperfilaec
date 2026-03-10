@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { Plus, Trash2, Users, Briefcase, GraduationCap, Building, MapPin, X, Save } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,17 +46,7 @@ export const ClassManagement = () => {
         if (!profile) return;
         try {
             setLoading(true);
-            let query = supabase
-                .from("training_classes")
-                .select("*")
-                .eq("is_active", true);
-
-            if (profile?.site) {
-                query = query.eq("site", profile.site);
-            }
-
-            const { data, error } = await query.order("created_at", { ascending: false });
-            if (error) throw error;
+            const data = await api.get(`/classes?site=${profile?.site || 'all'}`);
             setClasses(data || []);
         } catch (error: any) {
             console.error("Error fetching classes:", error);
@@ -76,14 +66,8 @@ export const ClassManagement = () => {
             return;
         }
         try {
-            const { error } = await supabase
-                .from("training_classes")
-                .insert([{
-                    ...formData,
-                    created_by: (await supabase.auth.getUser()).data.user?.id
-                }]);
+            await api.post("/classes", formData);
 
-            if (error) throw error;
             toast({ title: "Sucesso!", description: "Turma ativada no sistema." });
             setIsCreating(false);
             setFormData({
@@ -103,17 +87,14 @@ export const ClassManagement = () => {
     const handleDelete = async (id: string) => {
         if (!confirm("Confirmar desativação de turma?")) return;
         try {
-            const { error } = await supabase
-                .from("training_classes")
-                .update({ is_active: false })
-                .eq("id", id);
-            if (error) throw error;
+            await api.patch(`/classes/${id}`, { is_active: false });
             toast({ title: "Arquivo Atualizado", description: "Turma removida do log ativo." });
             fetchClasses();
         } catch (error: any) {
             toast({ title: "Erro na desativação", description: error.message, variant: "destructive" });
         }
     };
+
 
     return (
         <div className="p-8 space-y-12">

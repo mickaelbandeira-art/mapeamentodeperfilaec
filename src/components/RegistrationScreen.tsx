@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { UserCircle, Sparkles, Loader2, CheckCircle2, ArrowLeft } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 
 interface RegistrationScreenProps {
@@ -38,15 +38,7 @@ export const RegistrationScreen = ({ onComplete, initialMode, onBack }: Registra
 
   const fetchClassesBySite = async (site: string) => {
     try {
-      const query = supabase
-        .from("training_classes")
-        .select("id, name")
-        .eq("is_active", true)
-        .order("name");
-
-      // Filter by site if site column exists (post-migration)
-      const { data, error } = await query.or(`site.eq.${site},site.eq.`);
-      if (error) throw error;
+      const data = await api.get(`/classes?site=${site}`);
       setClasses(data || []);
     } catch (error) {
       console.error("Error fetching classes:", error);
@@ -69,14 +61,7 @@ export const RegistrationScreen = ({ onComplete, initialMode, onBack }: Registra
 
       setLoading(true);
       try {
-        const { data, error } = await supabase
-          .from("participants")
-          .select("name, email")
-          .eq("registration", registration)
-          .eq("is_active", true)
-          .maybeSingle();
-
-        if (error) throw error;
+        const data = await api.get(`/participants/lookup/${registration}`);
 
         if (data) {
           setName(data.name);
@@ -104,6 +89,7 @@ export const RegistrationScreen = ({ onComplete, initialMode, onBack }: Registra
 
     return () => clearTimeout(debounce);
   }, [registration, mode]);
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Brain, Target, Users, LineChart, Download, RotateCcw, Zap, Sparkles, MessageSquare, GraduationCap, ArrowRight, Loader2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 import { generateConsultativeInsights } from "@/lib/gemini";
 import { useAuth } from "@/hooks/useAuth";
@@ -104,31 +104,28 @@ export const ResultsScreen = ({ scores, mindset, vac, participantData, instructo
 
         setAiInsights(insights);
         setIsSaving(true);
-        const { error } = await supabase
-          .from("test_results")
-          .insert({
-            registration: participantData.registration,
-            name: participantData.name,
-            email: participantData.email,
-            cpf: participantData.cpf,
-            site: participantData.site,
-            score_d: scores.D,
-            score_i: scores.I,
-            score_s: scores.S,
-            score_c: scores.C,
-            dominant_profile: dominant,
-            mindset_tipo: mindset,
-            vac_dominante: vac,
-            insights_consultivos: insights,
-            class_id: participantData.class_id || null,
-            instructor_name: instructorData.instructorName,
-            instructor_registration: instructorData.instructorRegistration,
-            instructor_email: instructorData.instructorEmail,
-            class_name: instructorData.className,
-            user_id: user?.id || null,
-          });
 
-        if (error) throw error;
+        await api.post("/test-results", {
+          registration: participantData.registration,
+          name: participantData.name,
+          email: participantData.email,
+          cpf: participantData.cpf,
+          site: participantData.site,
+          score_d: scores.D,
+          score_i: scores.I,
+          score_s: scores.S,
+          score_c: scores.C,
+          dominant_profile: dominant,
+          mindset_tipo: mindset,
+          vac_dominante: vac,
+          insights_consultivos: insights,
+          class_id: participantData.class_id || null,
+          instructor_name: instructorData.instructorName,
+          instructor_registration: instructorData.instructorRegistration,
+          instructor_email: instructorData.instructorEmail,
+          class_name: instructorData.className,
+        });
+
       } catch (error: any) {
         console.error("Error in results process:", error);
         toast({
@@ -144,6 +141,7 @@ export const ResultsScreen = ({ scores, mindset, vac, participantData, instructo
 
     generateAndSave();
   }, [scores, participantData, dominant, user?.id]);
+
 
   return (
     <div className="h-[100dvh] overflow-hidden p-4 bg-background font-sans flex flex-col">

@@ -15,7 +15,51 @@ RADICAL DESIGN SYSTEM: Swiss Digital Brutalism
 
 @layer base {
   :root {
-    /* Radical Palette: Acid Green / Signal Orange / Ink Black */
+    /* STUDIO BRUTALIST: Ink & Paper (Professional Refinement) */
+    --background: 0 0% 98%;
+    /* Paper White */
+    --foreground: 0 0% 12%;
+    /* Deep Ink */
+
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 12%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 12%;
+
+    --primary: 142 76% 36%;
+    /* Forest/Acid Green Hybrid for professional light mode */
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 18 100% 50%;
+    /* Signal Orange kept for energy */
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 0 0% 92%;
+    --muted-foreground: 0 0% 45%;
+
+    --accent: 45 100% 45%;
+    /* Deep Warning Yellow */
+    --accent-foreground: 0 0% 12%;
+
+    --destructive: 0 84% 44%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 12%;
+    /* Thick Ink Borders */
+    --input: 0 0% 96%;
+    --ring: 142 76% 36%;
+
+    --radius: 0px;
+
+    /* DISC Colors (Standard for consistency) */
+    --disc-dominance: 0 100% 50%;
+    --disc-influence: 45 100% 50%;
+    --disc-stability: 145 100% 50%;
+    --disc-conformity: 210 100% 50%;
+  }
+
+  .dark {
     --background: 0 0% 0%;
     --foreground: 0 0% 100%;
 
@@ -30,39 +74,14 @@ RADICAL DESIGN SYSTEM: Swiss Digital Brutalism
     --primary-foreground: 0 0% 0%;
 
     --secondary: 18 100% 50%;
-    /* Signal Orange */
     --secondary-foreground: 0 0% 100%;
 
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 70%;
 
-    --accent: 45 100% 50%;
-    /* Warning Yellow */
-    --accent-foreground: 0 0% 0%;
-
-    --destructive: 0 100% 50%;
-    /* Pure Red */
-    --destructive-foreground: 0 0% 100%;
-
     --border: 0 0% 100%;
+    /* White borders in dark mode */
     --input: 0 0% 10%;
-    --ring: 84 100% 50%;
-
-    --radius: 0px;
-    /* SHARP GEOMETRY */
-
-    /* DISC Colors (Brutalized) */
-    --disc-dominance: 0 100% 50%;
-    --disc-influence: 45 100% 50%;
-    --disc-stability: 145 100% 50%;
-    --disc-conformity: 210 100% 50%;
-  }
-
-  .dark {
-    /* Dark is the base in this radical version, keeping for compatibility but focusing on high-contrast black background */
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
-    --border: 0 0% 100%;
     --ring: 84 100% 50%;
   }
 }
@@ -197,6 +216,24 @@ RADICAL DESIGN SYSTEM: Swiss Digital Brutalism
 
   .animate-marquee {
     animation: marquee 20s linear infinite;
+  }
+
+  /* Custom Brutalist Scrollbar */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 4px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 0px;
+  }
+
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: var(--primary);
   }
 }
 

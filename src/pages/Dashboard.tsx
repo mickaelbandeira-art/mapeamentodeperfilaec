@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { useAuth } from "@/hooks/useAuth";
 import { StatsCard } from "@/components/dashboard/StatsCard";
 import { ParticipantsTable } from "@/components/dashboard/ParticipantsTable";
@@ -64,47 +64,26 @@ const Dashboard = () => {
   }, [searchText, filterCargo, filterStatus, filterTurma, filterInstructor, profile, isGlobalAdmin, dateRange]);
 
   const fetchPendingCount = async () => {
-    const { count } = await supabase
-      .from("profiles")
-      .select("*", { count: 'exact', head: true })
-      .eq("status", "pending");
-    setPendingApprovalsCount(count || 0);
+    try {
+      const data = await api.get("/auth/pending-count");
+      setPendingApprovalsCount(data.count || 0);
+    } catch (error) {
+      console.error("Error fetching pending count:", error);
+    }
   };
 
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
 
-      // Stats: filter by user's site via RPC for proper isolation
-      const { data: statsData, error: statsError } = await supabase.rpc("get_dashboard_stats", {
-        p_site: profile?.site || null,
-        p_start_date: dateRange?.from?.toISOString() || null,
-        p_end_date: dateRange?.to?.toISOString() || null,
-      });
+      // Stats
+      const statsData = await api.get(`/stats?site=${profile?.site || ''}&start=${dateRange?.from?.toISOString() || ''}&end=${dateRange?.to?.toISOString() || ''}`);
+      setStats(statsData);
 
-      if (statsError) {
-        setStats(null);
-      } else {
-        // RPC returns an array, take the first item
-        setStats(Array.isArray(statsData) ? statsData[0] : statsData);
-      }
+      // Participants
+      const participantsData = await api.get(`/participants?search=${searchText || ''}&status=${filterStatus === "all" ? '' : filterStatus}&cargo=${filterCargo === "all" ? '' : filterCargo}&turma=${filterTurma === "all" ? '' : filterTurma}&instructor=${filterInstructor === "all" ? '' : filterInstructor}&site=${profile?.site || ''}&start=${dateRange?.from?.toISOString() || ''}&end=${dateRange?.to?.toISOString() || ''}`);
 
-      // Participants: RPC enforces site scoping via auth.uid() in the DB function
-      const { data: participantsData, error: participantsError } = await supabase.rpc("search_participants", {
-        search_text: searchText || null,
-        filter_status: filterStatus === "all" ? null : filterStatus,
-        filter_cargo: filterCargo === "all" ? null : filterCargo,
-        filter_coordinator: null,
-        filter_turma: filterTurma === "all" ? null : filterTurma,
-        filter_instructor_email: filterInstructor === "all" ? null : filterInstructor,
-        filter_site: profile?.site || null, // RPC ignores this for non-admins and uses auth context
-        p_start_date: dateRange?.from?.toISOString() || null,
-        p_end_date: dateRange?.to?.toISOString() || null,
-      });
-
-      if (participantsError) throw participantsError;
-
-      const mappedParticipants = (participantsData || [] as any[]).map(p => ({
+      const mappedParticipants = (participantsData || []).map((p: any) => ({
         ...p,
         site: p?.site || null,
         class_name: p?.class_name || null,
@@ -129,7 +108,7 @@ const Dashboard = () => {
             .map((p: any) => [p.instructor_email, { name: p.instructor_name, email: p.instructor_email }])
         ).values()
       );
-      setInstructors(uniqueInstructors);
+      setInstructors(uniqueInstructors as { name: string; email: string }[]);
 
     } catch (error: any) {
       console.error("Error fetching dashboard data:", error);
@@ -142,6 +121,7 @@ const Dashboard = () => {
       setLoading(false);
     }
   };
+
 
   const discData = participants
     .filter((p) => p.has_completed_test && p.dominant_profile)

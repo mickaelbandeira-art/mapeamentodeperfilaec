@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { api } from "@/lib/api";
 import { toast } from "@/hooks/use-toast";
 import { Loader2, UserCheck, UserX, Clock, ShieldCheck, Mail, MapPin, Briefcase, Hash, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -13,13 +13,7 @@ const AdminApproval = () => {
     const fetchPendingUsers = async () => {
         setIsLoading(true);
         try {
-            const { data, error } = await supabase
-                .from("profiles")
-                .select("*")
-                .eq("status", "pending")
-                .order("created_at", { ascending: false });
-
-            if (error) throw error;
+            const data = await api.get("/admin/pending-users");
             setPendingUsers(data || []);
         } catch (error: any) {
             toast({
@@ -39,16 +33,7 @@ const AdminApproval = () => {
     const handleApproval = async (userId: string, status: "approved" | "rejected") => {
         setProcessingId(userId);
         try {
-            const { error } = await supabase
-                .from("profiles")
-                .update({
-                    status,
-                    approved_at: status === "approved" ? new Date().toISOString() : null,
-                    approved_by: (await supabase.auth.getUser()).data.user?.id
-                })
-                .eq("id", userId);
-
-            if (error) throw error;
+            await api.post("/admin/approve-user", { userId, status });
 
             toast({
                 title: status === "approved" ? "ACESSO_CONCEDIDO" : "REQUISIÇÃO_NEGADA",
@@ -66,6 +51,7 @@ const AdminApproval = () => {
             setProcessingId(null);
         }
     };
+
 
     if (isLoading) {
         return (

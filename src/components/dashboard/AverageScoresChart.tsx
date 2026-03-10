@@ -37,40 +37,40 @@ export const AverageScoresChart = ({ participants }: AverageScoresChartProps) =>
                 <BarChart data={data} margin={{ top: 20, right: 30, left: 0, bottom: 20 }}>
                     <XAxis
                         dataKey="name"
-                        stroke="var(--foreground)"
+                        stroke="hsl(var(--foreground))"
                         fontSize={10}
                         fontWeight={900}
                         tickLine={true}
                         axisLine={true}
-                        tick={{ fill: 'var(--foreground)', fontStyle: 'italic' }}
+                        tick={{ fill: 'hsl(var(--foreground))', fontStyle: 'italic' }}
                     />
                     <YAxis
-                        stroke="var(--foreground)"
+                        stroke="hsl(var(--foreground))"
                         fontSize={10}
                         fontWeight={900}
                         tickLine={true}
                         axisLine={true}
-                        tick={{ fill: 'var(--foreground)', fontStyle: 'italic' }}
+                        tick={{ fill: 'hsl(var(--foreground))', fontStyle: 'italic' }}
                     />
                     <Tooltip
-                        cursor={{ fill: 'var(--foreground)', opacity: 0.1 }}
+                        cursor={{ fill: 'hsl(var(--foreground))', opacity: 0.1 }}
                         contentStyle={{
-                            backgroundColor: 'var(--foreground)',
-                            border: '4px solid var(--secondary)',
+                            backgroundColor: 'hsl(var(--foreground))',
+                            border: '4px solid hsl(var(--secondary))',
                             borderRadius: '0px',
                             padding: '10px'
                         }}
                         itemStyle={{
-                            color: 'var(--background)',
+                            color: 'hsl(var(--background))',
                             fontWeight: '900',
                             textTransform: 'uppercase',
                             fontStyle: 'italic',
                             fontSize: '10px'
                         }}
                     />
-                    <Bar dataKey="score" stroke="var(--foreground)" strokeWidth={4}>
+                    <Bar dataKey="score" stroke="hsl(var(--foreground))" strokeWidth={4}>
                         {data.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
+                            <Cell key={`cell-${index}`} fill={`hsl(${entry.color})`} />
                         ))}
                     </Bar>
                 </BarChart>

@@ -1,18 +1,19 @@
 import { useState } from "react";
-import { Moon, Sun, Shield, Palette, Settings, X } from "lucide-react";
+import { Moon, Sun, Shield, Palette, Settings, X, User as UserIcon, Monitor, Activity } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useNavigate } from "react-router-dom";
 import { useAccentColor } from "@/hooks/useAccentColor";
+import { useAuth } from "@/hooks/useAuth";
 import aecLogo from "@/assets/aec-logo.png";
 
 export const Header = () => {
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
+  const { profile } = useAuth();
   const { activeColor, changeColor, colors } = useAccentColor();
   const [showColors, setShowColors] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
 
-  // Close color palette when closing the main menu
   const toggleMenu = () => {
     if (showMenu) {
       setShowColors(false);
@@ -21,147 +22,162 @@ export const Header = () => {
   };
 
   return (
-    <header className="fixed bottom-0 right-0 z-50 flex flex-col items-end pointer-events-none">
-      {/* Main Menu Options - Hidden by default, toggled via gear icon */}
+    <header className="fixed bottom-0 right-0 z-50 flex flex-col items-end pointer-events-none group/header">
+      {/* 
+          RADICAL SIDEBAR: TECH_BRUTAL_CONTROL
+          Betraying the 'Standard Drawer' with a fixed vertical command strip.
+      */}
       <div
-        className={`pointer-events-auto flex flex-col gap-0 border-l-2 border-t-2 border-foreground bg-background p-0 brutal-card shadow-none transition-all duration-300 origin-bottom-right h-screen justify-center w-[80px] ${showMenu ? "opacity-100 scale-100 translate-x-0" : "opacity-0 scale-95 translate-x-12 absolute right-0 top-0 h-0 w-0 overflow-hidden"
+        className={`pointer-events-auto flex flex-col border-l-4 border-t-4 border-foreground bg-background p-0 transition-all duration-500 ease-[cubic-bezier(0.8,0,0.2,1)] h-screen w-[100px] md:w-[120px] relative overflow-visible ${showMenu ? "translate-x-0 opacity-100" : "translate-x-full opacity-0 absolute"
           }`}
       >
-        {/* Color Palette Popover */}
+        {/* Decorative Grid Lines */}
+        <div className="absolute inset-0 pointer-events-none opacity-5 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:20px_20px]"></div>
+
+        {/* Color Palette Module (Floating Asymmetric) */}
         {showColors && (
           <div
-            className="absolute right-[calc(100%+16px)] top-1/2 -translate-y-1/2 bg-background border-2 border-foreground shadow-[6px_6px_0px_var(--foreground)] p-4 w-56 animate-in slide-in-from-right-4 duration-200"
+            className="absolute right-[calc(100%+20px)] bottom-24 bg-background border-4 border-foreground shadow-[12px_12px_0px_var(--primary)] p-6 w-64 animate-in fade-in slide-in-from-right-8 duration-300"
           >
-            {/* Header label */}
-            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-3 pb-2 border-b-2 border-foreground">
-              Cores // AeC
-            </p>
+            <div className="flex items-center justify-between mb-4 border-b-4 border-foreground pb-2">
+              <p className="text-[12px] font-black uppercase tracking-[0.2em] italic">
+                Color_Core
+              </p>
+              <Activity className="w-4 h-4 text-primary animate-pulse" />
+            </div>
 
-            {/* Color Swatches */}
-            <div className="flex flex-col gap-2">
+            <div className="grid grid-cols-1 gap-3">
               {colors.map((color) => {
                 const isActive = activeColor === color.hsl;
                 return (
                   <button
                     key={color.name}
                     onClick={() => changeColor(color.hsl)}
-                    className={`flex items-center gap-3 w-full px-3 py-2 transition-all border-2 group
+                    className={`flex items-center gap-4 w-full px-4 py-3 transition-all border-4 group/color
                       ${isActive
-                        ? "border-foreground shadow-[3px_3px_0px_var(--foreground)]"
-                        : "border-transparent hover:border-foreground"
+                        ? "border-foreground bg-foreground text-background translate-x-1"
+                        : "border-transparent hover:border-foreground/20"
                       }`}
-                    title={color.name}
-                    aria-label={`Selecionar cor ${color.name}`}
                   >
-                    {/* Color dot */}
                     <span
-                      className="w-6 h-6 rounded-full shrink-0 border-2 border-foreground/30 transition-all group-hover:scale-110"
+                      className="w-5 h-5 shrink-0 border-2 border-foreground"
                       style={{ backgroundColor: color.hex }}
                     />
-                    {/* Color name */}
-                    <span className="text-[11px] font-black uppercase tracking-widest">
+                    <span className="text-[10px] font-black uppercase tracking-tighter">
                       {color.name}
                     </span>
-                    {/* Active indicator */}
-                    {isActive && (
-                      <span className="ml-auto text-[9px] font-black uppercase tracking-widest text-muted-foreground">
-                        ✓
-                      </span>
-                    )}
+                    {isActive && <div className="ml-auto w-1 h-4 bg-primary" />}
                   </button>
                 );
               })}
             </div>
-
-            {/* Preview strip */}
-            <div className="mt-3 pt-3 border-t-2 border-foreground/20 flex gap-1">
-              {colors.map((c) => (
-                <button
-                  key={c.name}
-                  onClick={() => changeColor(c.hsl)}
-                  className="flex-1 h-2 transition-all hover:h-3"
-                  style={{ backgroundColor: c.hex }}
-                  title={c.name}
-                />
-              ))}
-            </div>
           </div>
         )}
 
-        <div className="flex flex-col w-full">
-          {/* Close Button at top of menu */}
-          <button
-            onClick={toggleMenu}
-            className="p-4 hover:bg-destructive hover:text-destructive-foreground transition-all flex justify-center w-full"
-            title="Fechar"
-          >
-            <X className="h-6 w-6" />
-          </button>
+        {/* Sidebar Content */}
+        <div className="flex flex-col h-full relative z-10">
+          {/* TOP SECTION: IDENTITY */}
+          <div className="p-4 border-b-4 border-foreground bg-foreground text-background flex flex-col items-center gap-2">
+            <button
+              onClick={toggleMenu}
+              className="w-full aspect-square border-2 border-background flex items-center justify-center hover:bg-background hover:text-foreground transition-all group/close"
+            >
+              <X className="h-6 w-6 group-hover:rotate-90 transition-transform" />
+            </button>
+            <div className="mt-2 flex flex-col items-center">
+              <div className="w-10 h-10 bg-background flex items-center justify-center mb-1 border border-background-foreground/20">
+                <UserIcon className="w-5 h-5 text-foreground" />
+              </div>
+              <span className="text-[8px] font-black uppercase text-center leading-none tracking-widest opacity-40">
+                {profile?.full_name?.split(' ')[0] || "Guest"}
+              </span>
+            </div>
+          </div>
 
-          <div className="border-b-2 border-foreground w-full my-4"></div>
+          {/* MIDDLE SECTION: COMMANDS - Custom Scrollbar */}
+          <div className="flex-1 flex flex-col divide-y-4 divide-foreground overflow-y-auto 
+            scrollbar-thin scrollbar-thumb-foreground/20 scrollbar-track-transparent hover:scrollbar-thumb-foreground/40 transition-colors">
 
-          {/* Home (Logo) */}
-          <button
-            onClick={() => { navigate("/"); setShowMenu(false); }}
-            className="p-4 border-b-2 border-foreground hover:bg-primary hover:text-primary-foreground transition-all flex justify-center items-center w-full"
-            title="Início"
-          >
-            <img
-              src={aecLogo}
-              alt="AEC"
-              className="w-10 h-auto dark:invert grayscale brightness-200"
-            />
-          </button>
-
-          {/* Dashboard */}
-          <button
-            onClick={() => { navigate("/dashboard"); setShowMenu(false); }}
-            className="p-4 border-b-2 border-foreground hover:bg-secondary hover:text-secondary-foreground transition-all flex justify-center w-full"
-            title="Dashboard"
-          >
-            <Shield className="h-6 w-6" />
-          </button>
-
-          {/* Color Palette Toggle */}
-          <button
-            onClick={() => setShowColors((prev) => !prev)}
-            className={`p-4 border-b-2 border-foreground transition-all relative flex justify-center w-full ${showColors
-              ? "bg-primary text-primary-foreground"
-              : "hover:bg-primary hover:text-primary-foreground"
-              }`}
-            title="Cores AeC"
-            aria-label={showColors ? "Fechar seletor de cores" : "Abrir seletor de cores"}
-          >
-            <Palette className="h-6 w-6" />
-            {/* Active color dot indicator */}
-            {!showColors && (
-              <span
-                className="absolute bottom-2 right-2 w-2 h-2 rounded-full border border-foreground"
-                style={{ backgroundColor: `hsl(${activeColor})` }}
+            {/* Logo Button - Unified Pattern */}
+            <button
+              onClick={() => { navigate("/"); setShowMenu(false); }}
+              className="p-6 hover:bg-primary transition-all flex flex-col items-center gap-2 group/nav border-b-4 border-foreground bg-white/5"
+            >
+              <img
+                src={aecLogo}
+                alt="AeC"
+                className={`w-16 h-auto group-hover:scale-110 transition-transform ${theme === 'dark' ? 'filter brightness-0 invert' : 'filter brightness-0'}`}
               />
-            )}
-          </button>
+              <span className="text-[9px] font-black uppercase tracking-tighter opacity-40 group-hover:opacity-100 group-hover:text-background transition-all">Sistema</span>
+            </button>
 
-          {/* Dark / Light toggle */}
-          <button
-            onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-            className="p-4 hover:bg-accent hover:text-accent-foreground transition-all flex justify-center w-full"
-            title={theme === "dark" ? "Modo Claro" : "Modo Escuro"}
-          >
-            {theme === "dark" ? <Sun className="h-6 w-6" /> : <Moon className="h-6 w-6" />}
-          </button>
+            {/* Dashboard Link */}
+            <button
+              onClick={() => { navigate("/dashboard"); setShowMenu(false); }}
+              className="p-8 hover:bg-secondary text-foreground hover:text-white transition-all flex flex-col items-center gap-2 group/nav"
+            >
+              <Shield className="h-8 w-8 group-hover:rotate-12 transition-transform" />
+              <span className="text-[9px] font-black uppercase tracking-tighter">System</span>
+            </button>
+
+            {/* Appearance Module */}
+            <button
+              onClick={() => setShowColors((prev) => !prev)}
+              className={`p-8 transition-all relative flex flex-col items-center gap-2 group/nav ${showColors ? "bg-primary text-background" : "hover:bg-primary"
+                }`}
+            >
+              <Palette className="h-8 w-8" />
+              <span className="text-[9px] font-black uppercase tracking-tighter">Visual</span>
+              {!showColors && (
+                <div
+                  className="absolute bottom-4 right-4 w-3 h-3 border-2 border-foreground"
+                  style={{ backgroundColor: `hsl(${activeColor})` }}
+                />
+              )}
+            </button>
+
+            {/* Environment Toggle */}
+            <button
+              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+              className="p-8 hover:bg-accent text-foreground transition-all flex flex-col items-center gap-2"
+            >
+              {theme === "dark" ? <Sun className="h-8 w-8" /> : <Moon className="h-8 w-8" />}
+              <span className="text-[9px] font-black uppercase tracking-tighter">
+                {theme === "dark" ? "Light_Mode" : "Dark_Mode"}
+              </span>
+            </button>
+          </div>
+
+          {/* BOTTOM SECTION: STATUS - Simplified */}
+          <div className="p-4 border-t-4 border-foreground bg-foreground/5 flex flex-col items-center gap-2">
+            <div className="flex gap-1">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="w-1.5 h-1.5 bg-foreground opacity-20" />
+              ))}
+            </div>
+            <div className="text-[7px] font-black font-mono tracking-widest opacity-30 mt-1">
+              V.2.0.4A
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Main Gear/Settings Button - Visible only when menu is closed */}
+      {/* 
+          RADICAL TRIGGER: THE_CORE_GATE
+      */}
       <button
         onClick={toggleMenu}
-        className={`pointer-events-auto absolute bottom-8 right-0 pr-2 pl-4 py-4 border-l-2 border-t-2 border-b-2 border-r-0 border-foreground bg-background brutal-card transition-all duration-300 z-50 hover:bg-foreground hover:text-background flex justify-center items-center ${showMenu ? "opacity-0 scale-50 pointer-events-none translate-x-[100%]" : "opacity-100 scale-100 translate-x-0"
+        className={`pointer-events-auto fixed bottom-12 right-0 pl-6 pr-4 py-8 border-l-8 border-t-4 border-b-4 border-foreground bg-background transition-all duration-300 z-50 hover:bg-primary hover:translate-x-[-10px] group/trigger ${showMenu ? "translate-x-full opacity-0" : "translate-x-0 opacity-100 shadow-[-15px_15px_0px_var(--secondary)]"
           }`}
-        title="Menu"
-        aria-label="Toggle Menu"
       >
-        <Settings className="h-8 w-8" />
+        <div className="flex flex-col items-center gap-2">
+          <Settings className="h-8 w-8 group-hover/trigger:rotate-90 transition-transform duration-500" />
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] font-mono [writing-mode:vertical-lr] rotate-180">
+            SYSTEM_OP
+          </span>
+        </div>
+        {/* Animated deco dot */}
+        <div className="absolute top-2 left-2 w-2 h-2 bg-secondary animate-ping" />
       </button>
 
     </header>

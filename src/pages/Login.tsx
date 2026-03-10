@@ -52,132 +52,35 @@ const Login = () => {
   const onSubmit = async (values: LoginFormValues) => {
     setIsLoading(true);
     try {
-      console.log("🚀 Iniciando processo de login para:", values.email);
-      const { error, data } = await supabase.auth.signInWithPassword({
-        email: values.email,
-        password: values.password,
-      });
+      const { error } = await signIn(values.email, values.password, values.site);
 
       if (error) throw error;
 
-      if (data.user) {
-        console.log("🔑 Usuário autenticado, validando perfil...");
-
-        // Tentativa 1: Busca completa (com site e matricula)
-        let { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("site, role, matricula, status")
-          .eq("id", data.user.id)
-          .maybeSingle();
-
-        // Se falhar por erro de coluna (schema mismatch), tenta o fallback básico
-        if (profileError && (profileError.code === "PGRST204" || profileError.message?.includes("column"))) {
-          console.warn("⚠️ Schema desatualizado. Tentando busca simplificada...");
-          const { data: fallbackData, error: fallbackError } = await supabase
-            .from("profiles")
-            .select("role")
-            .eq("id", data.user.id)
-            .maybeSingle();
-
-          if (!fallbackError) {
-            profileData = fallbackData as any;
-            profileError = null;
-            toast({
-              title: "Aviso de Compatibilidade",
-              description: "O banco de dados ainda não possui as colunas de 'Praça'. O acesso foi liberado mas as travas de site estão desativadas.",
-              variant: "default",
-            });
-          }
-        }
-
-        if (profileError) {
-          console.error("❌ Erro fatal ao buscar perfil:", profileError);
-          await supabase.auth.signOut();
-          throw new Error(`Erro de acesso (${profileError.code}): ${profileError.message}. Por favor, verifique se executou o script SQL.`);
-        }
-
-        if (!profileData) {
-          console.error("❌ Perfil não encontrado para o ID:", data.user.id);
-          await supabase.auth.signOut();
-          throw new Error("Seu perfil ainda não foi criado. Entre em contato com o administrador.");
-        }
-
-        // Validação de Status (Aprovação)
-        if (profileData.status && profileData.status !== "approved") {
-          console.warn(`🚫 BLOQUEIO: Usuário com status '${profileData.status}'`);
-          await supabase.auth.signOut();
-          setIsLoading(false);
-
-          if (profileData.status === "pending") {
-            toast({
-              title: "Acesso em Análise",
-              description: "Sua solicitação está aguardando liberação do administrador.",
-              variant: "default",
-            });
-          } else {
-            toast({
-              title: "Acesso Negado",
-              description: "Sua solicitação de acesso não foi aprovada.",
-              variant: "destructive",
-            });
-          }
-          return;
-        }
-
-        const isAdmin = profileData.role === "admin";
-        const userSite = profileData.site?.trim().toUpperCase();
-        const selectedSite = values.site.trim().toUpperCase();
-
-        console.log(`📊 Validação: Registrada=${userSite || 'N/A'}, Selecionada=${selectedSite}, Admin=${isAdmin}`);
-
-        // Validação de Praça: Admins ignoram, outros verificam se a praça está na lista permitida
-        if (!isAdmin && userSite) {
-          const allowedSites = userSite.split(',').map(s => s.trim().toUpperCase());
-          if (!allowedSites.includes(selectedSite)) {
-            console.warn(`🚫 BLOQUEIO: Praça incompatível.`);
-            await supabase.auth.signOut();
-            setIsLoading(false);
-            toast({
-              title: "Acesso Inválido para esta Praça",
-              description: `Sua matrícula (${profileData.matricula || 'N/A'}) não tem permissão para a praça ${selectedSite}. Praças autorizadas: ${userSite}.`,
-              variant: "destructive",
-            });
-            return;
-          }
-        }
-
-        // Se o usuário tem site vazio mas a coluna existe, vinculamos agora
-        if (profileData.hasOwnProperty('site') && !profileData.site) {
-          console.log(`📍 Vinculando praça ao perfil: ${values.site}`);
-          await supabase
-            .from("profiles")
-            .update({ site: values.site })
-            .eq("id", data.user.id);
-        }
-
-        console.log("✅ Acesso liberado.");
-        toast({
-          title: "Login realizado com sucesso!",
-          description: "Bem-vindo ao sistema.",
-        });
-        navigate("/dashboard");
-      }
-    } catch (error: any) {
-      console.error("❌ Erro fatal no login:", error);
       toast({
-        title: "Erro no login",
-        description: error.message || "Ocorreu um erro ao fazer login.",
-        variant: "destructive",
+        title: "Login realizado com sucesso!",
+        description: "Bem-vindo ao sistema.",
       });
+      navigate("/dashboard");
+    } catch (error: any) {
+      console.error("❌ Erro no login:", error);
+      // O toast já é disparado pelo useAuth, mas podemos reforçar aqui se necessário
     } finally {
       setIsLoading(false);
     }
   };
 
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
       <Card className="w-full max-w-md glass-card">
-        <CardHeader className="space-y-4">
+        <button
+          onClick={() => navigate("/")}
+          className="absolute top-6 left-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest opacity-40 hover:opacity-100 transition-opacity group"
+        >
+          <Loader2 className="w-4 h-4 -rotate-90 group-hover:-translate-x-1 transition-transform" />
+          Voltar para o Início
+        </button>
+        <CardHeader className="space-y-4 pt-12">
           <div className="flex justify-center">
             <img src={aecLogo} alt="AEC Logo" className="h-16 w-auto brightness-0 invert" />
           </div>
